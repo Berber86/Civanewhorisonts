@@ -3,275 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Colony Game</title>
+    <title>Tribes — Пошаговая стратегия</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a2e;
+            background: #0d1117;
             color: #e0e0e0;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
+        .api-bar {
+            background: #161b22;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #30363d;
+            font-size: 0.85em;
+        }
+
+        .api-bar label { color: #888; white-space: nowrap; }
+
+        .api-bar input {
+            flex: 1;
+            padding: 5px 10px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+
+        .api-bar .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #f85149;
+        }
+
+        .api-bar .status-dot.ok { background: #3fb950; }
+
         .container {
-            width: 100%;
-            max-width: 600px;
+            max-width: 700px;
+            margin: 0 auto;
             padding: 20px;
         }
 
-        /* ===== ЭКРАН ВХОДА ===== */
-        #login-screen {
-            text-align: center;
+        /* ===== ОБЩИЕ СТИЛИ ===== */
+        h1 { color: #e94560; text-align: center; margin-bottom: 5px; }
+        h2 { color: #e94560; margin-bottom: 15px; }
+        h3 { color: #c9d1d9; margin-bottom: 10px; }
+
+        .subtitle { text-align: center; color: #888; margin-bottom: 25px; }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
         }
 
-        #login-screen h1 {
-            font-size: 2.5em;
-            color: #e94560;
-            margin-bottom: 10px;
+        .btn:hover { transform: scale(1.02); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn-primary { background: #e94560; color: white; }
+        .btn-primary:hover:not(:disabled) { background: #c73650; }
+
+        .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+        .btn-secondary:hover:not(:disabled) { background: #30363d; }
+
+        .btn-full { width: 100%; }
+
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
         }
 
-        #login-screen p {
-            color: #888;
-            margin-bottom: 30px;
-        }
+        .error-text { color: #f85149; margin-top: 10px; text-align: center; }
+
+        /* ===== ЛОГИН ===== */
+        #login-screen { text-align: center; padding-top: 60px; }
 
         #login-screen input {
             width: 100%;
             padding: 15px;
             font-size: 1.2em;
-            border: 2px solid #333;
+            border: 2px solid #30363d;
             border-radius: 10px;
-            background: #16213e;
+            background: #161b22;
             color: #fff;
             outline: none;
             margin-bottom: 15px;
         }
 
-        #login-screen input:focus {
-            border-color: #e94560;
-        }
+        #login-screen input:focus { border-color: #e94560; }
 
-        #login-btn {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.2em;
-            background: #e94560;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+        /* ===== ГЕНЕРАЦИЯ ПЛЕМЕНИ ===== */
+        #tribe-screen { display: none; }
 
-        #login-btn:hover {
-            background: #c73650;
-        }
-
-        #login-error {
-            color: #ff6b6b;
-            margin-top: 15px;
-            min-height: 24px;
-        }
-
-        /* ===== ЭКРАН ОЖИДАНИЯ ===== */
-        #waiting-screen {
-            text-align: center;
-            display: none;
-        }
-
-        #waiting-screen h2 {
-            color: #e94560;
+        .tribe-traits {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 20px;
         }
 
-        .players-list {
-            background: #16213e;
+        .trait-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
             border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: left;
+            padding: 15px;
+            text-align: center;
         }
 
-        .players-list .player-item {
-            padding: 8px 0;
-            border-bottom: 1px solid #333;
+        .trait-card .trait-icon { font-size: 2em; margin-bottom: 5px; }
+        .trait-card .trait-label { font-size: 0.75em; color: #888; margin-bottom: 4px; }
+        .trait-card .trait-value { font-size: 1em; font-weight: bold; color: #e0e0e0; }
+
+        .tribe-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tribe-buttons .btn { flex: 1; }
+
+        /* ===== ОЖИДАНИЕ ===== */
+        #waiting-screen { display: none; text-align: center; }
+
+        .players-grid {
+            display: grid;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .player-slot {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .players-list .player-item:last-child {
-            border-bottom: none;
+        .player-slot.empty { opacity: 0.4; }
+        .player-slot .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
         }
 
-        .empty-slot {
-            color: #555;
-            font-style: italic;
-        }
+        .status-badge.ready { background: #238636; color: white; }
+        .status-badge.waiting { background: #e3b341; color: black; }
+        .status-badge.empty-badge { background: #30363d; color: #888; }
 
-        /* ===== ЭКРАН ИГРЫ ===== */
-        #game-screen {
-            display: none;
-        }
+        /* ===== ИГРА ===== */
+        #game-screen { display: none; }
 
         .game-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #30363d;
         }
 
-        .game-header h2 {
-            color: #e94560;
-        }
-
-        .turn-info {
-            background: #16213e;
-            padding: 8px 16px;
+        .turn-badge {
+            background: #e94560;
+            color: white;
+            padding: 6px 16px;
             border-radius: 20px;
-            font-size: 0.9em;
+            font-weight: bold;
         }
 
-        /* Ресурсы игрока */
-        .resources-panel {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+        /* Резюме племени */
+        .tribe-summary {
+            background: #1a1f2e;
+            border-left: 4px solid #e94560;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 0 10px 10px 0;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #b0b8c4;
+        }
+
+        /* Выборы */
+        .choices-section {
             margin-bottom: 20px;
         }
 
-        .resource-card {
-            background: #16213e;
+        .choices-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .choice-option {
+            background: #161b22;
+            border: 2px solid #30363d;
             border-radius: 10px;
             padding: 15px;
-            text-align: center;
-        }
-
-        .resource-card .icon {
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
-
-        .resource-card .value {
-            font-size: 1.8em;
-            font-weight: bold;
-        }
-
-        .resource-card .label {
-            font-size: 0.8em;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .res-science .value { color: #4fc3f7; }
-        .res-resources .value { color: #81c784; }
-        .res-culture .value { color: #ce93d8; }
-
-        /* Распределение поселенцев */
-        .assignment-panel {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .assignment-panel h3 {
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .settlers-remaining {
-            text-align: center;
-            font-size: 1.3em;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #1a1a2e;
-            border-radius: 8px;
-        }
-
-        .settlers-remaining .count {
-            color: #ffd700;
-            font-weight: bold;
-            font-size: 1.4em;
-        }
-
-        .assignment-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #333;
-        }
-
-        .assignment-row:last-child {
-            border-bottom: none;
-        }
-
-        .assignment-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.1em;
-        }
-
-        .assignment-controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .assignment-controls button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #555;
-            background: #1a1a2e;
-            color: #fff;
-            font-size: 1.3em;
+            margin-bottom: 8px;
             cursor: pointer;
             transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .assignment-controls button:hover {
-            border-color: #e94560;
-            background: #e94560;
-        }
+        .choice-option:hover { border-color: #58a6ff; background: #1a2233; }
+        .choice-option.selected { border-color: #e94560; background: #2a1520; }
 
-        .assignment-controls button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .assignment-controls button:disabled:hover {
-            border-color: #555;
-            background: #1a1a2e;
-        }
-
-        .assignment-count {
-            font-size: 1.5em;
+        .choice-option .choice-title {
             font-weight: bold;
-            width: 30px;
-            text-align: center;
+            margin-bottom: 5px;
+            color: #e0e0e0;
         }
 
-        /* Кнопка завершения хода */
+        .choice-option .choice-desc {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        /* Большая кнопка хода */
         #end-turn-btn {
             width: 100%;
             padding: 20px;
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: bold;
             background: #e94560;
             color: white;
@@ -282,345 +249,274 @@
             margin-bottom: 15px;
         }
 
-        #end-turn-btn:hover {
-            background: #c73650;
-            transform: scale(1.02);
-        }
+        #end-turn-btn:hover:not(:disabled) { background: #c73650; transform: scale(1.02); }
+        #end-turn-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; transform: none; }
 
-        #end-turn-btn:disabled {
-            background: #555;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .turn-status {
+        .turn-status-bar {
             text-align: center;
-            padding: 15px;
-            background: #16213e;
+            padding: 12px;
             border-radius: 10px;
             margin-bottom: 15px;
+            font-size: 0.95em;
         }
 
-        .turn-status.waiting {
-            border: 2px solid #ffd700;
-            color: #ffd700;
+        .turn-status-bar.waiting-others {
+            background: #2a2000;
+            border: 1px solid #e3b341;
+            color: #e3b341;
         }
 
-        .turn-status.done {
-            border: 2px solid #81c784;
-            color: #81c784;
+        .turn-status-bar.your-turn {
+            background: #0a2d00;
+            border: 1px solid #3fb950;
+            color: #3fb950;
         }
 
-        /* Таблица всех игроков */
-        .scoreboard {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
+        .turn-status-bar.processing {
+            background: #1a1a2e;
+            border: 1px solid #58a6ff;
+            color: #58a6ff;
         }
 
-        .scoreboard h3 {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #888;
-        }
+        /* Скорборд */
+        .scoreboard { margin-top: 15px; }
 
-        .scoreboard-table {
+        .scoreboard table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .scoreboard-table th {
+        .scoreboard th {
             color: #888;
             font-size: 0.8em;
-            padding: 5px;
-            text-align: center;
-        }
-
-        .scoreboard-table td {
-            padding: 8px 5px;
-            text-align: center;
-            border-top: 1px solid #333;
-        }
-
-        .scoreboard-table .player-name {
+            padding: 8px;
             text-align: left;
-            font-weight: bold;
+            border-bottom: 1px solid #30363d;
         }
 
-        .scoreboard-table .current-player {
-            color: #e94560;
+        .scoreboard td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #21262d;
         }
 
-        .scoreboard-table .status-done {
-            color: #81c784;
+        .scoreboard .me { color: #e94560; font-weight: bold; }
+
+        /* Спиннер */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #30363d;
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
         }
 
-        .scoreboard-table .status-waiting {
-            color: #ffd700;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Модальное окно подтверждения */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: #16213e;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            border: 2px solid #e94560;
-        }
-
-        .modal h3 {
-            margin-bottom: 10px;
-            color: #e94560;
-        }
-
-        .modal p {
-            margin-bottom: 20px;
-            color: #aaa;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .modal-buttons button {
-            flex: 1;
-            padding: 12px;
-            font-size: 1.1em;
-            border: none;
+        /* Нарратив от LLM */
+        .narrative-block {
+            background: #111820;
+            border: 1px solid #1f4a6e;
             border-radius: 10px;
-            cursor: pointer;
-            transition: 0.2s;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            line-height: 1.7;
+            color: #a0b8d0;
+            font-style: italic;
         }
 
-        .btn-confirm {
-            background: #e94560;
-            color: white;
-        }
-
-        .btn-confirm:hover {
-            background: #c73650;
-        }
-
-        .btn-cancel {
-            background: #333;
-            color: #aaa;
-        }
-
-        .btn-cancel:hover {
-            background: #444;
-        }
-
-        /* Админ-панель */
+        /* Админ */
         .admin-panel {
-            background: #2a1a1a;
-            border: 1px solid #e94560;
+            background: #2a1515;
+            border: 1px solid #f85149;
             border-radius: 10px;
             padding: 15px;
             margin-top: 15px;
         }
 
-        .admin-panel h4 {
-            color: #e94560;
-            margin-bottom: 10px;
-            text-align: center;
-        }
+        .admin-panel h4 { color: #f85149; margin-bottom: 10px; text-align: center; }
 
-        .admin-player-row {
+        .admin-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #333;
-        }
-
-        .admin-player-row:last-child {
-            border-bottom: none;
+            padding: 6px 0;
         }
 
         .kick-btn {
-            padding: 5px 15px;
-            background: #c73650;
+            padding: 4px 12px;
+            background: #8b0000;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
-        .kick-btn:hover {
-            background: #e94560;
-        }
+        .kick-btn:hover { background: #a00; }
 
         .reset-btn {
             width: 100%;
             padding: 10px;
             margin-top: 10px;
-            background: #8b0000;
+            background: #600;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 1em;
         }
 
-        .reset-btn:hover {
-            background: #a00000;
+        .reset-btn:hover { background: #800; }
+
+        /* Модалка */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
 
-        /* Лог последнего хода */
-        .turn-log {
-            background: #1a2e1a;
-            border: 1px solid #81c784;
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #161b22;
+            border: 2px solid #e94560;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .modal h3 { color: #e94560; margin-bottom: 10px; }
+        .modal p { color: #888; margin-bottom: 20px; }
+
+        .modal-buttons { display: flex; gap: 10px; }
+        .modal-buttons button { flex: 1; padding: 12px; font-size: 1em; border: none; border-radius: 10px; cursor: pointer; }
+
+        .btn-confirm { background: #e94560; color: white; }
+        .btn-confirm:hover { background: #c73650; }
+        .btn-cancel { background: #21262d; color: #888; }
+        .btn-cancel:hover { background: #30363d; }
+
+        /* Соседи */
+        .neighbor-info {
+            background: #1a1520;
+            border: 1px solid #ce93d8;
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 15px;
-            display: none;
         }
 
-        .turn-log.visible {
-            display: block;
-        }
+        .neighbor-info h4 { color: #ce93d8; margin-bottom: 8px; }
+        .neighbor-info .neighbor-desc { font-size: 0.9em; color: #a088b0; }
 
-        .turn-log h4 {
-            color: #81c784;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .turn-log .log-entry {
-            padding: 4px 0;
-            font-size: 0.9em;
-            color: #aaa;
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
+
+    <!-- API KEY BAR -->
+    <div class="api-bar">
+        <label>🔑 OpenRouter API:</label>
+        <input type="password" id="api-key-input" placeholder="sk-or-v1-..." oninput="saveApiKey()">
+        <div class="status-dot" id="api-status"></div>
+    </div>
+
     <div class="container">
 
-        <!-- ===== ЭКРАН ВХОДА ===== -->
+        <!-- ===== ЛОГИН ===== -->
         <div id="login-screen">
-            <h1>🏛️ Colony</h1>
-            <p>Пошаговая стратегия на 5 игроков</p>
-            <input type="text" id="username-input" placeholder="Введи своё имя" maxlength="20" autocomplete="off">
-            <button id="login-btn" onclick="login()">Войти в игру</button>
-            <div id="login-error"></div>
+            <h1>🏛️ Tribes</h1>
+            <p class="subtitle">Стратегия каменного века на 3 игрока</p>
+            <input type="text" id="username-input" placeholder="Введи имя" maxlength="20" autocomplete="off">
+            <button class="btn btn-primary btn-full" onclick="login()">Войти</button>
+            <div class="error-text" id="login-error"></div>
         </div>
 
-        <!-- ===== ЭКРАН ОЖИДАНИЯ ===== -->
+        <!-- ===== ГЕНЕРАЦИЯ ПЛЕМЕНИ ===== -->
+        <div id="tribe-screen">
+            <h2 style="text-align:center">🎲 Генерация племени</h2>
+            <p class="subtitle">Судьба определяет начало твоего пути</p>
+
+            <div class="tribe-traits" id="tribe-traits"></div>
+
+            <div class="tribe-buttons">
+                <button class="btn btn-secondary" onclick="rerollTribe()">🎲 Перебросить</button>
+                <button class="btn btn-primary" onclick="acceptTribe()">✅ Принять племя</button>
+            </div>
+        </div>
+
+        <!-- ===== ОЖИДАНИЕ ===== -->
         <div id="waiting-screen">
             <h2>⏳ Ожидание игроков</h2>
-            <p>Игра начнётся когда соберутся 5 игроков</p>
-            <div class="players-list" id="waiting-players-list"></div>
-            <div id="waiting-admin-panel"></div>
+            <p class="subtitle">Игра начнётся когда все будут готовы</p>
+            <div class="players-grid" id="waiting-players"></div>
+            <div id="waiting-admin"></div>
         </div>
 
-        <!-- ===== ЭКРАН ИГРЫ ===== -->
+        <!-- ===== ИГРА ===== -->
         <div id="game-screen">
             <div class="game-header">
-                <h2>🏛️ Colony</h2>
-                <div class="turn-info">Ход #<span id="turn-number">1</span></div>
+                <h2 style="margin:0">🏛️ Tribes</h2>
+                <div class="turn-badge">Ход <span id="turn-number">1</span></div>
             </div>
 
-            <!-- Лог прошлого хода -->
-            <div class="turn-log" id="turn-log">
-                <h4>📜 Результат прошлого хода</h4>
-                <div id="turn-log-content"></div>
+            <!-- Резюме племени -->
+            <div class="tribe-summary" id="tribe-summary"></div>
+
+            <!-- Инфо о соседе -->
+            <div class="neighbor-info hidden" id="neighbor-info">
+                <h4>🏕️ Соседнее племя: <span id="neighbor-name"></span></h4>
+                <div class="neighbor-desc" id="neighbor-desc"></div>
             </div>
 
-            <!-- Ресурсы -->
-            <div class="resources-panel">
-                <div class="resource-card res-science">
-                    <div class="icon">🔬</div>
-                    <div class="value" id="res-science">0</div>
-                    <div class="label">Наука</div>
-                </div>
-                <div class="resource-card res-resources">
-                    <div class="icon">🪵</div>
-                    <div class="value" id="res-resources">0</div>
-                    <div class="label">Ресурсы</div>
-                </div>
-                <div class="resource-card res-culture">
-                    <div class="icon">🎭</div>
-                    <div class="value" id="res-culture">0</div>
-                    <div class="label">Культура</div>
-                </div>
+            <!-- Нарратив -->
+            <div class="narrative-block hidden" id="narrative-block"></div>
+
+            <!-- Статус -->
+            <div class="turn-status-bar" id="turn-status-bar"></div>
+
+            <!-- Выборы: Наука -->
+            <div class="choices-section hidden" id="science-choices">
+                <h3>🔬 Изыскательский интерес</h3>
+                <div id="science-options"></div>
             </div>
 
-            <!-- Распределение -->
-            <div class="assignment-panel" id="assignment-panel">
-                <h3>👥 Распредели 5 поселенцев</h3>
-                <div class="settlers-remaining">
-                    Свободно: <span class="count" id="settlers-free">5</span> из 5
-                </div>
+            <!-- Выборы: Социальные -->
+            <div class="choices-section hidden" id="social-choices">
+                <h3>👥 Социальное действие</h3>
+                <div id="social-options"></div>
+            </div>
 
-                <div class="assignment-row">
-                    <div class="assignment-label">🔬 Наука</div>
-                    <div class="assignment-controls">
-                        <button onclick="changeAssignment('science', -1)">−</button>
-                        <span class="assignment-count" id="assign-science">0</span>
-                        <button onclick="changeAssignment('science', 1)">+</button>
-                    </div>
-                </div>
-
-                <div class="assignment-row">
-                    <div class="assignment-label">🪵 Ресурсы</div>
-                    <div class="assignment-controls">
-                        <button onclick="changeAssignment('resources', -1)">−</button>
-                        <span class="assignment-count" id="assign-resources">0</span>
-                        <button onclick="changeAssignment('resources', 1)">+</button>
-                    </div>
-                </div>
-
-                <div class="assignment-row">
-                    <div class="assignment-label">🎭 Культура</div>
-                    <div class="assignment-controls">
-                        <button onclick="changeAssignment('culture', -1)">−</button>
-                        <span class="assignment-count" id="assign-culture">0</span>
-                        <button onclick="changeAssignment('culture', 1)">+</button>
-                    </div>
-                </div>
+            <!-- Выборы: Дипломатия -->
+            <div class="choices-section hidden" id="diplo-choices">
+                <h3>🤝 Дипломатия с соседом</h3>
+                <div id="diplo-options"></div>
             </div>
 
             <!-- Кнопка хода -->
-            <button id="end-turn-btn" onclick="showConfirmModal()">
+            <button id="end-turn-btn" onclick="showConfirmModal()" disabled>
                 ⚔️ ЗАВЕРШИТЬ ХОД
             </button>
 
-            <!-- Статус хода -->
-            <div class="turn-status" id="turn-status"></div>
-
-            <!-- Таблица игроков -->
-            <div class="scoreboard">
-                <h3>📊 Все игроки</h3>
-                <table class="scoreboard-table">
+            <!-- Скорборд -->
+            <div class="scoreboard card">
+                <h3>📊 Все племена</h3>
+                <table>
                     <thead>
                         <tr>
-                            <th style="text-align:left">Игрок</th>
-                            <th>🔬</th>
-                            <th>🪵</th>
-                            <th>🎭</th>
+                            <th>Племя</th>
+                            <th>Биом</th>
                             <th>Ход</th>
+                            <th>Статус</th>
                         </tr>
                     </thead>
                     <tbody id="scoreboard-body"></tbody>
@@ -628,503 +524,893 @@
             </div>
 
             <!-- Админ-панель -->
-            <div class="admin-panel" id="admin-panel" style="display:none">
-                <h4>👑 Панель админа</h4>
+            <div class="admin-panel hidden" id="admin-panel">
+                <h4>👑 Админ</h4>
                 <div id="admin-players"></div>
                 <button class="reset-btn" onclick="showResetConfirm()">🗑️ СБРОСИТЬ ИГРУ</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно подтверждения хода -->
+    <!-- Модалки -->
     <div class="modal-overlay" id="confirm-modal">
         <div class="modal">
             <h3>Завершить ход?</h3>
-            <p id="confirm-text">Ты уверен что хочешь завершить ход?</p>
+            <p id="confirm-summary"></p>
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="hideModals()">Отмена</button>
-                <button class="btn-confirm" onclick="endTurn()">Да, завершить!</button>
+                <button class="btn-confirm" onclick="endTurn()">Да!</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно сброса -->
     <div class="modal-overlay" id="reset-modal">
         <div class="modal">
             <h3>⚠️ Сбросить игру?</h3>
-            <p>Все данные будут удалены. Все игроки будут разлогинены. Это нельзя отменить!</p>
+            <p>Все данные удалятся!</p>
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="hideModals()">Отмена</button>
-                <button class="btn-confirm" onclick="resetGame()">Да, сбросить!</button>
+                <button class="btn-confirm" onclick="resetGame()">Сбросить</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно кика -->
     <div class="modal-overlay" id="kick-modal">
         <div class="modal">
             <h3>Кикнуть игрока?</h3>
-            <p>Игрок <strong id="kick-player-name"></strong> будет удалён. Игра сбросится и начнётся заново!</p>
+            <p>Игрок <strong id="kick-name"></strong> будет удалён. Игра сбросится!</p>
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="hideModals()">Отмена</button>
-                <button class="btn-confirm" onclick="confirmKick()">Да, кикнуть!</button>
+                <button class="btn-confirm" onclick="confirmKick()">Кикнуть</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <script>
-        // ===== FIREBASE КОНФИГ =====
-        const firebaseConfig = {
-            apiKey: "AIzaSyDU4YCIWRFLjMz2eDqmKgoGEYKbQUb5s4U",
-            authDomain: "prototypeciva.firebaseapp.com",
-            databaseURL: "https://prototypeciva-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "prototypeciva",
-            storageBucket: "prototypeciva.firebasestorage.app",
-            messagingSenderId: "191956270979",
-            appId: "1:191956270979:web:dc850a748171a8304080b6"
-        };
+    // =============================================
+    // FIREBASE
+    // =============================================
+    firebase.initializeApp({
+        apiKey: "AIzaSyDU4YCIWRFLjMz2eDqmKgoGEYKbQUb5s4U",
+        authDomain: "prototypeciva.firebaseapp.com",
+        databaseURL: "https://prototypeciva-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "prototypeciva",
+        storageBucket: "prototypeciva.firebasestorage.app",
+        messagingSenderId: "191956270979",
+        appId: "1:191956270979:web:dc850a748171a8304080b6"
+    });
+    const db = firebase.database();
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    // =============================================
+    // ПУЛЫ ГЕНЕРАЦИИ
+    // =============================================
+    const POOLS = {
+        biome: [
+            { name: "Густые джунгли", icon: "🌴", desc: "Влажные тропические заросли, полные жизни и опасностей" },
+            { name: "Бескрайняя степь", icon: "🌾", desc: "Открытые травянистые равнины под высоким небом" },
+            { name: "Хвойная тайга", icon: "🌲", desc: "Суровые северные леса с коротким летом" },
+            { name: "Каменистая пустыня", icon: "🏜️", desc: "Сухая земля с редкими оазисами" },
+            { name: "Болотистые топи", icon: "🐊", desc: "Мрачные заболоченные низины с туманами" },
+            { name: "Саванна", icon: "🦁", desc: "Жаркие луга с островками деревьев" },
+            { name: "Тундра", icon: "❄️", desc: "Вечная мерзлота, мхи и северный ветер" },
+            { name: "Лиственный лес", icon: "🍂", desc: "Умеренный лес с богатой фауной" }
+        ],
+        geography: [
+            { name: "Великая река", icon: "🌊", desc: "Широкая полноводная река с плодородными берегами" },
+            { name: "Морское побережье", icon: "🏖️", desc: "Берег солёного моря с приливами" },
+            { name: "Высокие горы", icon: "🏔️", desc: "Неприступные скалы с пещерами" },
+            { name: "Действующий вулкан", icon: "🌋", desc: "Огненная гора, дарующая страх и плодородный пепел" },
+            { name: "Глубокое озеро", icon: "💧", desc: "Огромное пресное озеро с рыбой" },
+            { name: "Каньон", icon: "🪨", desc: "Глубокое ущелье с отвесными стенами" },
+            { name: "Скальные пещеры", icon: "🕳️", desc: "Система пещер, дающая укрытие" },
+            { name: "Термальные источники", icon: "♨️", desc: "Горячие ключи, бьющие из-под земли" }
+        ],
+        trait: [
+            { name: "Бесстрашные охотники", icon: "🏹", desc: "Племя славится смелостью на охоте" },
+            { name: "Искусные собиратели", icon: "🧺", desc: "Знают каждый съедобный корень и ягоду" },
+            { name: "Ночные наблюдатели", icon: "🌙", desc: "Активны ночью, видят в темноте лучше других" },
+            { name: "Крепкие телом", icon: "💪", desc: "Необычайно выносливы и сильны" },
+            { name: "Говорящие с духами", icon: "👻", desc: "Верят в мир духов и слышат их шёпот" },
+            { name: "Мастера камня", icon: "🪨", desc: "Лучше других обрабатывают камень" },
+            { name: "Бегуны", icon: "🦶", desc: "Способны бежать дольше любого зверя" },
+            { name: "Певцы у костра", icon: "🎵", desc: "Передают знания через песни и ритмы" }
+        ],
+        nearby: [
+            { name: "Стада диких быков", icon: "🐂", desc: "Огромные стада мощных животных бродят рядом" },
+            { name: "Стая крупных хищников", icon: "🐺", desc: "Опасные звери охотятся неподалёку" },
+            { name: "Северное сияние", icon: "🌌", desc: "Небо регулярно озаряется мистическим светом" },
+            { name: "Ядовитые растения", icon: "☠️", desc: "Красивые, но смертельно опасные заросли" },
+            { name: "Залежи кремня", icon: "🔥", desc: "Камень, высекающий искры, повсюду" },
+            { name: "Медовые пчёлы", icon: "🐝", desc: "Дикие ульи со сладким золотом" },
+            { name: "Глиняные берега", icon: "🏺", desc: "Мягкая глина, из которой можно лепить" },
+            { name: "Обсидиановые россыпи", icon: "🖤", desc: "Вулканическое стекло — острее любого камня" }
+        ]
+    };
 
-        // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
-        let currentUser = null;
-        let gameData = null;
-        let assignments = { science: 0, resources: 0, culture: 0 };
-        let kickTarget = null;
+    const MAX_PLAYERS = 3;
 
-        const MAX_PLAYERS = 5;
-        const SETTLERS = 5;
+    // =============================================
+    // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+    // =============================================
+    let currentUser = null;
+    let gameData = null;
+    let currentTribe = null; // для генерации до подтверждения
+    let selectedScience = null;
+    let selectedSocial = null;
+    let selectedDiplo = null;
+    let kickTarget = null;
 
-        // ===== ИНИЦИАЛИЗАЦИЯ =====
-        window.onload = function() {
-            const saved = localStorage.getItem('colony_username');
-            if (saved) {
-                document.getElementById('username-input').value = saved;
-            }
+    // =============================================
+    // API KEY
+    // =============================================
+    function saveApiKey() {
+        const key = document.getElementById('api-key-input').value.trim();
+        localStorage.setItem('tribes_api_key', key);
+        document.getElementById('api-status').className = 'status-dot' + (key ? ' ok' : '');
+    }
 
-            // Слушаем изменения в базе
-            db.ref('game').on('value', (snapshot) => {
-                gameData = snapshot.val();
-                handleGameState();
-            });
-        };
+    function getApiKey() {
+        return localStorage.getItem('tribes_api_key') || '';
+    }
 
-        // ===== ОБРАБОТКА СОСТОЯНИЯ =====
-        function handleGameState() {
-            if (!currentUser) return;
-
-            // Проверяем, есть ли наш игрок ещё в игре (может быть кикнут или игра сброшена)
-            if (gameData && gameData.players && !gameData.players[currentUser]) {
-                // Нас кикнули или игра сброшена
-                currentUser = null;
-                localStorage.removeItem('colony_username');
-                showScreen('login');
-                document.getElementById('login-error').textContent = 'Игра была сброшена. Войди заново.';
-                return;
-            }
-
-            if (!gameData || !gameData.players) {
-                // Нет данных — значит игра сброшена
-                currentUser = null;
-                localStorage.removeItem('colony_username');
-                showScreen('login');
-                return;
-            }
-
-            const playerCount = Object.keys(gameData.players).length;
-
-            if (playerCount < MAX_PLAYERS) {
-                showScreen('waiting');
-                renderWaitingScreen();
-            } else {
-                showScreen('game');
-                renderGameScreen();
-            }
+    // =============================================
+    // INIT
+    // =============================================
+    window.onload = function() {
+        // Restore API key
+        const savedKey = getApiKey();
+        if (savedKey) {
+            document.getElementById('api-key-input').value = savedKey;
+            document.getElementById('api-status').classList.add('ok');
         }
 
-        // ===== ВХОД =====
-        function login() {
-            const name = document.getElementById('username-input').value.trim();
-            const errorEl = document.getElementById('login-error');
-
-            if (!name) {
-                errorEl.textContent = 'Введи имя!';
-                return;
-            }
-
-            if (name.length < 2) {
-                errorEl.textContent = 'Имя слишком короткое!';
-                return;
-            }
-
-            // Проверяем текущее состояние базы
-            db.ref('game/players').once('value', (snapshot) => {
-                const players = snapshot.val() || {};
-                const playerNames = Object.keys(players);
-
-                if (playerNames.includes(name)) {
-                    // Старый игрок — просто входим
-                    currentUser = name;
-                    localStorage.setItem('colony_username', name);
-                    errorEl.textContent = '';
-                    handleGameState();
-                } else if (playerNames.length >= MAX_PLAYERS) {
-                    errorEl.textContent = `Уже ${MAX_PLAYERS} игроков. Регистрация закрыта!`;
-                } else {
-                    // Новый игрок — регистрируем
-                    const newPlayer = {
-                        science: 0,
-                        resources: 0,
-                        culture: 0,
-                        turnDone: false,
-                        assignment: { science: 0, resources: 0, culture: 0 },
-                        joinedAt: Date.now()
-                    };
-
-                    db.ref('game/players/' + name).set(newPlayer).then(() => {
-                        // Если это первый игрок — он админ и задаём ход 1
-                        if (playerNames.length === 0) {
-                            db.ref('game/turn').set(1);
-                            db.ref('game/admin').set(name);
-                        }
-                        currentUser = name;
-                        localStorage.setItem('colony_username', name);
-                        errorEl.textContent = '';
-                        handleGameState();
-                    });
-                }
-            });
+        // Restore username
+        const savedName = localStorage.getItem('tribes_username');
+        if (savedName) {
+            document.getElementById('username-input').value = savedName;
         }
 
-        // Вход по Enter
-        document.getElementById('username-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') login();
+        // Listen to game changes
+        db.ref('game').on('value', snap => {
+            gameData = snap.val();
+            handleState();
         });
 
-        // ===== ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ =====
-        function showScreen(screen) {
-            document.getElementById('login-screen').style.display = screen === 'login' ? 'block' : 'none';
-            document.getElementById('waiting-screen').style.display = screen === 'waiting' ? 'block' : 'none';
-            document.getElementById('game-screen').style.display = screen === 'game' ? 'block' : 'none';
-        }
-
-        // ===== ЭКРАН ОЖИДАНИЯ =====
-        function renderWaitingScreen() {
-            if (!gameData || !gameData.players) return;
-
-            const players = Object.keys(gameData.players);
-            const list = document.getElementById('waiting-players-list');
-            let html = '';
-
-            for (let i = 0; i < MAX_PLAYERS; i++) {
-                if (i < players.length) {
-                    const isAdmin = gameData.admin === players[i];
-                    const isMe = players[i] === currentUser;
-                    html += `<div class="player-item">
-                        <span>${isMe ? '➤ ' : ''}${players[i]} ${isAdmin ? '👑' : ''}</span>
-                        <span style="color:#81c784">✓ В игре</span>
-                    </div>`;
-                } else {
-                    html += `<div class="player-item">
-                        <span class="empty-slot">Пустой слот</span>
-                        <span class="empty-slot">${i + 1}/${MAX_PLAYERS}</span>
-                    </div>`;
-                }
-            }
-            list.innerHTML = html;
-
-            // Админ-панель на экране ожидания
-            const adminPanel = document.getElementById('waiting-admin-panel');
-            if (gameData.admin === currentUser && players.length > 1) {
-                let adminHtml = '<div class="admin-panel"><h4>👑 Панель админа</h4>';
-                players.forEach(p => {
-                    if (p !== currentUser) {
-                        adminHtml += `<div class="admin-player-row">
-                            <span>${p}</span>
-                            <button class="kick-btn" onclick="showKickConfirm('${p}')">Кикнуть</button>
-                        </div>`;
-                    }
-                });
-                adminHtml += '<button class="reset-btn" onclick="showResetConfirm()">🗑️ СБРОСИТЬ ИГРУ</button></div>';
-                adminPanel.innerHTML = adminHtml;
-            } else {
-                adminPanel.innerHTML = '';
-            }
-        }
-
-        // ===== ЭКРАН ИГРЫ =====
-        function renderGameScreen() {
-            if (!gameData || !gameData.players || !gameData.players[currentUser]) return;
-
-            const me = gameData.players[currentUser];
-            const turn = gameData.turn || 1;
-            const myTurnDone = me.turnDone;
-
-            // Номер хода
-            document.getElementById('turn-number').textContent = turn;
-
-            // Мои ресурсы
-            document.getElementById('res-science').textContent = me.science || 0;
-            document.getElementById('res-resources').textContent = me.resources || 0;
-            document.getElementById('res-culture').textContent = me.culture || 0;
-
-            // Если ход сделан — блокируем панель
-            const assignPanel = document.getElementById('assignment-panel');
-            const endTurnBtn = document.getElementById('end-turn-btn');
-
-            if (myTurnDone) {
-                assignPanel.style.opacity = '0.5';
-                assignPanel.style.pointerEvents = 'none';
-                endTurnBtn.disabled = true;
-                endTurnBtn.textContent = '✅ ХОД СДЕЛАН';
-            } else {
-                assignPanel.style.opacity = '1';
-                assignPanel.style.pointerEvents = 'auto';
-                endTurnBtn.disabled = false;
-                endTurnBtn.textContent = '⚔️ ЗАВЕРШИТЬ ХОД';
-
-                // Восстанавливаем распределение
-                if (!myTurnDone) {
-                    updateAssignmentUI();
-                }
-            }
-
-            // Статус хода
-            const statusEl = document.getElementById('turn-status');
-            const players = gameData.players;
-            const allNames = Object.keys(players);
-            const doneCount = allNames.filter(n => players[n].turnDone).length;
-
-            if (myTurnDone) {
-                statusEl.className = 'turn-status done';
-                statusEl.textContent = `Ожидание остальных... (${doneCount}/${MAX_PLAYERS} сделали ход)`;
-            } else {
-                statusEl.className = 'turn-status waiting';
-                statusEl.textContent = `Сделай свой ход! (${doneCount}/${MAX_PLAYERS} уже готовы)`;
-            }
-
-            // Таблица игроков
-            const tbody = document.getElementById('scoreboard-body');
-            let tableHtml = '';
-            allNames.forEach(name => {
-                const p = players[name];
-                const isMe = name === currentUser;
-                const isAdmin = gameData.admin === name;
-                tableHtml += `<tr>
-                    <td class="player-name ${isMe ? 'current-player' : ''}">${isAdmin ? '👑 ' : ''}${name}</td>
-                    <td>${p.science || 0}</td>
-                    <td>${p.resources || 0}</td>
-                    <td>${p.culture || 0}</td>
-                    <td class="${p.turnDone ? 'status-done' : 'status-waiting'}">${p.turnDone ? '✅' : '⏳'}</td>
-                </tr>`;
-            });
-            tbody.innerHTML = tableHtml;
-
-            // Лог прошлого хода
-            const logEl = document.getElementById('turn-log');
-            const logContent = document.getElementById('turn-log-content');
-            if (gameData.lastTurnLog) {
-                logEl.classList.add('visible');
-                let logHtml = '';
-                Object.keys(gameData.lastTurnLog).forEach(name => {
-                    const entry = gameData.lastTurnLog[name];
-                    logHtml += `<div class="log-entry">
-                        ${name}: +${entry.science}🔬 +${entry.resources}🪵 +${entry.culture}🎭
-                    </div>`;
-                });
-                logContent.innerHTML = logHtml;
-            } else {
-                logEl.classList.remove('visible');
-            }
-
-            // Админ-панель
-            const adminPanel = document.getElementById('admin-panel');
-            if (gameData.admin === currentUser) {
-                adminPanel.style.display = 'block';
-                let adminHtml = '';
-                allNames.forEach(name => {
-                    if (name !== currentUser) {
-                        adminHtml += `<div class="admin-player-row">
-                            <span>${name}</span>
-                            <button class="kick-btn" onclick="showKickConfirm('${name}')">Кикнуть</button>
-                        </div>`;
-                    }
-                });
-                document.getElementById('admin-players').innerHTML = adminHtml;
-            } else {
-                adminPanel.style.display = 'none';
-            }
-        }
-
-        // ===== РАСПРЕДЕЛЕНИЕ ПОСЕЛЕНЦЕВ =====
-        function changeAssignment(type, delta) {
-            const newVal = assignments[type] + delta;
-            if (newVal < 0) return;
-
-            const total = Object.values(assignments).reduce((a, b) => a + b, 0);
-            if (total + delta > SETTLERS) return;
-
-            assignments[type] = newVal;
-            updateAssignmentUI();
-        }
-
-        function updateAssignmentUI() {
-            document.getElementById('assign-science').textContent = assignments.science;
-            document.getElementById('assign-resources').textContent = assignments.resources;
-            document.getElementById('assign-culture').textContent = assignments.culture;
-
-            const total = assignments.science + assignments.resources + assignments.culture;
-            document.getElementById('settlers-free').textContent = SETTLERS - total;
-
-            // Блокируем кнопки + если все распределены
-            // Блокируем кнопки - если 0
-            document.querySelectorAll('.assignment-controls').forEach(row => {
-                const minusBtn = row.children[0];
-                const plusBtn = row.children[2];
-                const countEl = row.children[1];
-                const val = parseInt(countEl.textContent);
-
-                minusBtn.disabled = val <= 0;
-                plusBtn.disabled = total >= SETTLERS;
-            });
-
-            // Блокируем кнопку завершения если не все распределены
-            const endBtn = document.getElementById('end-turn-btn');
-            if (total < SETTLERS) {
-                endBtn.disabled = true;
-                endBtn.textContent = `👥 Распредели ещё ${SETTLERS - total} поселенцев`;
-            } else {
-                endBtn.disabled = false;
-                endBtn.textContent = '⚔️ ЗАВЕРШИТЬ ХОД';
-            }
-        }
-
-        // ===== ЗАВЕРШЕНИЕ ХОДА =====
-        function showConfirmModal() {
-            const total = assignments.science + assignments.resources + assignments.culture;
-            if (total !== SETTLERS) return;
-
-            document.getElementById('confirm-text').textContent =
-                `Наука: ${assignments.science}, Ресурсы: ${assignments.resources}, Культура: ${assignments.culture}. Завершить ход?`;
-            document.getElementById('confirm-modal').classList.add('active');
-        }
-
-        function endTurn() {
-            hideModals();
-
-            const updates = {};
-            updates[`game/players/${currentUser}/turnDone`] = true;
-            updates[`game/players/${currentUser}/assignment`] = { ...assignments };
-
-            db.ref().update(updates).then(() => {
-                // Проверяем, все ли сделали ход
-                db.ref('game/players').once('value', (snapshot) => {
-                    const players = snapshot.val();
-                    const allNames = Object.keys(players);
-                    const allDone = allNames.every(n => players[n].turnDone);
-
-                    if (allDone) {
-                        processTurn(players);
-                    }
-                });
-            });
-
-            // Сбрасываем локальное распределение
-            assignments = { science: 0, resources: 0, culture: 0 };
-        }
-
-        // ===== ОБРАБОТКА ХОДА =====
-        function processTurn(players) {
-            const updates = {};
-            const log = {};
-
-            Object.keys(players).forEach(name => {
-                const p = players[name];
-                const a = p.assignment || { science: 0, resources: 0, culture: 0 };
-
-                const gainScience = a.science || 0;
-                const gainResources = a.resources || 0;
-                const gainCulture = a.culture || 0;
-
-                updates[`game/players/${name}/science`] = (p.science || 0) + gainScience;
-                updates[`game/players/${name}/resources`] = (p.resources || 0) + gainResources;
-                updates[`game/players/${name}/culture`] = (p.culture || 0) + gainCulture;
-                updates[`game/players/${name}/turnDone`] = false;
-                updates[`game/players/${name}/assignment`] = { science: 0, resources: 0, culture: 0 };
-
-                log[name] = {
-                    science: gainScience,
-                    resources: gainResources,
-                    culture: gainCulture
-                };
-            });
-
-            const currentTurn = (gameData.turn || 1) + 1;
-            updates['game/turn'] = currentTurn;
-            updates['game/lastTurnLog'] = log;
-
-            db.ref().update(updates);
-        }
-
-        // ===== АДМИН: КИК И СБРОС =====
-        function showKickConfirm(playerName) {
-            kickTarget = playerName;
-            document.getElementById('kick-player-name').textContent = playerName;
-            document.getElementById('kick-modal').classList.add('active');
-        }
-
-        function confirmKick() {
-            hideModals();
-            if (!kickTarget) return;
-
-            // Кик = полный сброс игры
-            resetGameData();
-        }
-
-        function showResetConfirm() {
-            document.getElementById('reset-modal').classList.add('active');
-        }
-
-        function resetGame() {
-            hideModals();
-            resetGameData();
-        }
-
-        function resetGameData() {
-            db.ref('game').remove().then(() => {
-                currentUser = null;
-                localStorage.removeItem('colony_username');
-                assignments = { science: 0, resources: 0, culture: 0 };
-                showScreen('login');
-                document.getElementById('login-error').textContent = 'Игра сброшена. Войди заново.';
-            });
-        }
-
-        // ===== МОДАЛКИ =====
-        function hideModals() {
-            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
-        }
-
-        // Закрытие по клику на оверлей
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) hideModals();
-            });
-        });
-
-        // ===== АВТОВХОД =====
+        // Auto-login
         setTimeout(() => {
-            const saved = localStorage.getItem('colony_username');
+            const saved = localStorage.getItem('tribes_username');
             if (saved) {
                 document.getElementById('username-input').value = saved;
                 login();
             }
         }, 500);
+    };
+
+    document.getElementById('username-input').addEventListener('keypress', e => {
+        if (e.key === 'Enter') login();
+    });
+
+    // =============================================
+    // SCREENS
+    // =============================================
+    function showScreen(name) {
+        ['login-screen', 'tribe-screen', 'waiting-screen', 'game-screen'].forEach(id => {
+            document.getElementById(id).style.display = 'none';
+        });
+        document.getElementById(name + '-screen').style.display = 'block';
+    }
+
+    // =============================================
+    // STATE HANDLER
+    // =============================================
+    function handleState() {
+        if (!currentUser) return;
+
+        // Проверяем кик / сброс
+        if (!gameData || !gameData.players || !gameData.players[currentUser]) {
+            currentUser = null;
+            localStorage.removeItem('tribes_username');
+            showScreen('login');
+            document.getElementById('login-error').textContent = 'Игра сброшена. Войди заново.';
+            return;
+        }
+
+        const me = gameData.players[currentUser];
+
+        // Этап 1: генерация племени
+        if (!me.tribeConfirmed) {
+            showScreen('tribe');
+            return;
+        }
+
+        // Этап 2: ожидание всех игроков
+        const players = Object.keys(gameData.players);
+        const allConfirmed = players.every(n => gameData.players[n].tribeConfirmed);
+
+        if (players.length < MAX_PLAYERS || !allConfirmed) {
+            showScreen('waiting');
+            renderWaiting();
+            return;
+        }
+
+        // Этап 3: игра
+        showScreen('game');
+        renderGame();
+    }
+
+    // =============================================
+    // LOGIN
+    // =============================================
+    function login() {
+        const name = document.getElementById('username-input').value.trim();
+        const err = document.getElementById('login-error');
+
+        if (!name || name.length < 2) {
+            err.textContent = 'Введи имя (мин. 2 символа)';
+            return;
+        }
+
+        db.ref('game/players').once('value', snap => {
+            const players = snap.val() || {};
+            const names = Object.keys(players);
+
+            if (names.includes(name)) {
+                // Возврат
+                currentUser = name;
+                localStorage.setItem('tribes_username', name);
+                err.textContent = '';
+                handleState();
+            } else if (names.length >= MAX_PLAYERS) {
+                err.textContent = `Уже ${MAX_PLAYERS} игрока. Мест нет!`;
+            } else {
+                // Новый
+                const data = {
+                    tribeConfirmed: false,
+                    tribe: null,
+                    summary: '',
+                    history: [],
+                    turnDone: false,
+                    turnChoices: null,
+                    llmResponse: null,
+                    joinedAt: Date.now()
+                };
+
+                db.ref('game/players/' + name).set(data).then(() => {
+                    if (names.length === 0) {
+                        db.ref('game/turn').set(1);
+                        db.ref('game/admin').set(name);
+                    }
+                    currentUser = name;
+                    localStorage.setItem('tribes_username', name);
+                    err.textContent = '';
+
+                    // Сразу генерируем племя
+                    rerollTribe();
+                    handleState();
+                });
+            }
+        });
+    }
+
+    // =============================================
+    // TRIBE GENERATION
+    // =============================================
+    function randomFrom(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function rerollTribe() {
+        currentTribe = {
+            biome: randomFrom(POOLS.biome),
+            geography: randomFrom(POOLS.geography),
+            trait: randomFrom(POOLS.trait),
+            nearby: randomFrom(POOLS.nearby)
+        };
+        renderTribe();
+    }
+
+    function renderTribe() {
+        if (!currentTribe) return;
+        const t = currentTribe;
+        document.getElementById('tribe-traits').innerHTML = `
+            <div class="trait-card">
+                <div class="trait-icon">${t.biome.icon}</div>
+                <div class="trait-label">БИОМ</div>
+                <div class="trait-value">${t.biome.name}</div>
+            </div>
+            <div class="trait-card">
+                <div class="trait-icon">${t.geography.icon}</div>
+                <div class="trait-label">ГЕОГРАФИЯ</div>
+                <div class="trait-value">${t.geography.name}</div>
+            </div>
+            <div class="trait-card">
+                <div class="trait-icon">${t.trait.icon}</div>
+                <div class="trait-label">ЧЕРТА ПЛЕМЕНИ</div>
+                <div class="trait-value">${t.trait.name}</div>
+            </div>
+            <div class="trait-card">
+                <div class="trait-icon">${t.nearby.icon}</div>
+                <div class="trait-label">РЯДОМ</div>
+                <div class="trait-value">${t.nearby.name}</div>
+            </div>
+        `;
+    }
+
+    function acceptTribe() {
+        if (!currentTribe || !currentUser) return;
+
+        const tribeData = {
+            biome: currentTribe.biome.name,
+            biomeDesc: currentTribe.biome.desc,
+            geography: currentTribe.geography.name,
+            geographyDesc: currentTribe.geography.desc,
+            trait: currentTribe.trait.name,
+            traitDesc: currentTribe.trait.desc,
+            nearby: currentTribe.nearby.name,
+            nearbyDesc: currentTribe.nearby.desc
+        };
+
+        const startSummary = `Племя "${currentUser}" обитает в биоме "${tribeData.biome}" (${tribeData.biomeDesc}). ` +
+            `Рядом: ${tribeData.geography} (${tribeData.geographyDesc}). ` +
+            `Черта племени: ${tribeData.trait} (${tribeData.traitDesc}). ` +
+            `Поблизости: ${tribeData.nearby} (${tribeData.nearbyDesc}). ` +
+            `Племя находится на стадии раннего каменного века.`;
+
+        db.ref('game/players/' + currentUser).update({
+            tribe: tribeData,
+            tribeConfirmed: true,
+            summary: startSummary
+        });
+    }
+
+    // =============================================
+    // WAITING SCREEN
+    // =============================================
+    function renderWaiting() {
+        if (!gameData || !gameData.players) return;
+        const players = Object.keys(gameData.players);
+        const el = document.getElementById('waiting-players');
+
+        let html = '';
+        for (let i = 0; i < MAX_PLAYERS; i++) {
+            if (i < players.length) {
+                const p = gameData.players[players[i]];
+                const confirmed = p.tribeConfirmed;
+                const isMe = players[i] === currentUser;
+                const isAdmin = gameData.admin === players[i];
+                html += `<div class="player-slot">
+                    <span>${isMe ? '➤ ' : ''}${isAdmin ? '👑 ' : ''}${players[i]}</span>
+                    <span class="status-badge ${confirmed ? 'ready' : 'waiting'}">${confirmed ? '✅ Готов' : '🎲 Генерирует...'}</span>
+                </div>`;
+            } else {
+                html += `<div class="player-slot empty">
+                    <span>Пустой слот</span>
+                    <span class="status-badge empty-badge">${i + 1}/${MAX_PLAYERS}</span>
+                </div>`;
+            }
+        }
+        el.innerHTML = html;
+
+        // Админ
+        const adminEl = document.getElementById('waiting-admin');
+        if (gameData.admin === currentUser) {
+            let ah = '<div class="admin-panel"><h4>👑 Админ</h4>';
+            players.forEach(p => {
+                if (p !== currentUser) {
+                    ah += `<div class="admin-row"><span>${p}</span><button class="kick-btn" onclick="showKickConfirm('${p}')">Кикнуть</button></div>`;
+                }
+            });
+            ah += '<button class="reset-btn" onclick="showResetConfirm()">🗑️ Сбросить</button></div>';
+            adminEl.innerHTML = ah;
+        } else {
+            adminEl.innerHTML = '';
+        }
+    }
+
+    // =============================================
+    // GAME SCREEN
+    // =============================================
+    function renderGame() {
+        if (!gameData || !gameData.players || !gameData.players[currentUser]) return;
+
+        const me = gameData.players[currentUser];
+        const turn = gameData.turn || 1;
+        const players = Object.keys(gameData.players);
+
+        document.getElementById('turn-number').textContent = turn;
+
+        // Summary
+        document.getElementById('tribe-summary').textContent = me.summary || 'Начало пути...';
+
+        // Neighbor info (turn >= 5)
+        const neighborEl = document.getElementById('neighbor-info');
+        if (turn >= 5) {
+            const neighbor = getNeighbor(currentUser, players);
+            if (neighbor && gameData.players[neighbor]) {
+                const np = gameData.players[neighbor];
+                neighborEl.classList.remove('hidden');
+                document.getElementById('neighbor-name').textContent = neighbor;
+                document.getElementById('neighbor-desc').textContent = np.summary || 'Неизвестное племя';
+            }
+        } else {
+            neighborEl.classList.add('hidden');
+        }
+
+        // Turn status
+        const doneCount = players.filter(n => gameData.players[n].turnDone).length;
+        const statusBar = document.getElementById('turn-status-bar');
+
+        if (me.turnDone) {
+            statusBar.className = 'turn-status-bar waiting-others';
+            statusBar.textContent = `⏳ Ожидание... (${doneCount}/${MAX_PLAYERS} сделали ход)`;
+        } else if (me.llmResponse) {
+            statusBar.className = 'turn-status-bar your-turn';
+            statusBar.textContent = `🟢 Твой ход! Сделай выбор. (${doneCount}/${MAX_PLAYERS} уже готовы)`;
+        } else if (me.llmLoading) {
+            statusBar.className = 'turn-status-bar processing';
+            statusBar.innerHTML = `<span class="spinner"></span> Генерация вариантов...`;
+        } else {
+            // Нужно запросить LLM
+            statusBar.className = 'turn-status-bar processing';
+            statusBar.innerHTML = `<span class="spinner"></span> Запрос к оракулу...`;
+            requestLLM();
+        }
+
+        // Render choices
+        renderChoices(me, turn);
+
+        // End turn button
+        updateEndTurnButton(me, turn);
+
+        // Narrative
+        const narrEl = document.getElementById('narrative-block');
+        if (me.llmResponse && me.llmResponse.narrative) {
+            narrEl.classList.remove('hidden');
+            narrEl.textContent = me.llmResponse.narrative;
+        } else {
+            narrEl.classList.add('hidden');
+        }
+
+        // Scoreboard
+        renderScoreboard(players);
+
+        // Admin
+        const adminPanel = document.getElementById('admin-panel');
+        if (gameData.admin === currentUser) {
+            adminPanel.classList.remove('hidden');
+            let ah = '';
+            players.forEach(p => {
+                if (p !== currentUser) {
+                    ah += `<div class="admin-row"><span>${p}</span><button class="kick-btn" onclick="showKickConfirm('${p}')">Кикнуть</button></div>`;
+                }
+            });
+            document.getElementById('admin-players').innerHTML = ah;
+        } else {
+            adminPanel.classList.add('hidden');
+        }
+    }
+
+    // =============================================
+    // NEIGHBOR LOGIC
+    // =============================================
+    function getNeighbor(playerName, allPlayers) {
+        const sorted = [...allPlayers].sort();
+        const idx = sorted.indexOf(playerName);
+        const nextIdx = (idx + 1) % sorted.length;
+        return sorted[nextIdx] !== playerName ? sorted[nextIdx] : null;
+    }
+
+    // =============================================
+    // CHOICES RENDERING
+    // =============================================
+    function renderChoices(me, turn) {
+        const scienceSection = document.getElementById('science-choices');
+        const socialSection = document.getElementById('social-choices');
+        const diploSection = document.getElementById('diplo-choices');
+
+        if (!me.llmResponse || me.turnDone) {
+            scienceSection.classList.add('hidden');
+            socialSection.classList.add('hidden');
+            diploSection.classList.add('hidden');
+            selectedScience = null;
+            selectedSocial = null;
+            selectedDiplo = null;
+            return;
+        }
+
+        const resp = me.llmResponse;
+
+        // Science
+        if (resp.science && resp.science.length > 0) {
+            scienceSection.classList.remove('hidden');
+            document.getElementById('science-options').innerHTML = resp.science.map((opt, i) =>
+                `<div class="choice-option ${selectedScience === i ? 'selected' : ''}" onclick="selectChoice('science', ${i})">
+                    <div class="choice-title">${opt.title}</div>
+                    <div class="choice-desc">${opt.description}</div>
+                </div>`
+            ).join('');
+        } else {
+            scienceSection.classList.add('hidden');
+        }
+
+        // Social
+        if (resp.social && resp.social.length > 0) {
+            socialSection.classList.remove('hidden');
+            document.getElementById('social-options').innerHTML = resp.social.map((opt, i) =>
+                `<div class="choice-option ${selectedSocial === i ? 'selected' : ''}" onclick="selectChoice('social', ${i})">
+                    <div class="choice-title">${opt.title}</div>
+                    <div class="choice-desc">${opt.description}</div>
+                </div>`
+            ).join('');
+        } else {
+            socialSection.classList.add('hidden');
+        }
+
+        // Diplomacy (turn >= 5)
+        if (turn >= 5 && resp.diplomacy && resp.diplomacy.length > 0) {
+            diploSection.classList.remove('hidden');
+            document.getElementById('diplo-options').innerHTML = resp.diplomacy.map((opt, i) =>
+                `<div class="choice-option ${selectedDiplo === i ? 'selected' : ''}" onclick="selectChoice('diplo', ${i})">
+                    <div class="choice-title">${opt.title}</div>
+                    <div class="choice-desc">${opt.description}</div>
+                </div>`
+            ).join('');
+        } else {
+            diploSection.classList.add('hidden');
+        }
+    }
+
+    function selectChoice(type, index) {
+        if (type === 'science') selectedScience = index;
+        if (type === 'social') selectedSocial = index;
+        if (type === 'diplo') selectedDiplo = index;
+
+        const me = gameData.players[currentUser];
+        renderChoices(me, gameData.turn || 1);
+        updateEndTurnButton(me, gameData.turn || 1);
+    }
+
+    function updateEndTurnButton(me, turn) {
+        const btn = document.getElementById('end-turn-btn');
+
+        if (me.turnDone) {
+            btn.disabled = true;
+            btn.textContent = '✅ ХОД СДЕЛАН';
+            return;
+        }
+
+        if (!me.llmResponse) {
+            btn.disabled = true;
+            btn.textContent = '⏳ Ожидание вариантов...';
+            return;
+        }
+
+        const needDiplo = turn >= 5;
+        const allSelected = selectedScience !== null && selectedSocial !== null && (!needDiplo || selectedDiplo !== null);
+
+        if (!allSelected) {
+            btn.disabled = true;
+            const missing = [];
+            if (selectedScience === null) missing.push('науку');
+            if (selectedSocial === null) missing.push('действие');
+            if (needDiplo && selectedDiplo === null) missing.push('дипломатию');
+            btn.textContent = `Выбери: ${missing.join(', ')}`;
+        } else {
+            btn.disabled = false;
+            btn.textContent = '⚔️ ЗАВЕРШИТЬ ХОД';
+        }
+    }
+
+    // =============================================
+    // LLM REQUEST
+    // =============================================
+    async function requestLLM() {
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            alert('Введи OpenRouter API ключ вверху страницы!');
+            return;
+        }
+
+        const me = gameData.players[currentUser];
+        if (!me || !me.tribe) return;
+
+        // Отмечаем загрузку
+        await db.ref('game/players/' + currentUser + '/llmLoading').set(true);
+
+        const turn = gameData.turn || 1;
+        const players = Object.keys(gameData.players);
+        const tribe = me.tribe;
+
+        // Базовый промпт
+        let prompt = `Ты — генератор контента для пошаговой игры, подобной Civilization. Игрок управляет первобытным племенем.
+
+ТЕКУЩИЕ ДАННЫЕ ПЛЕМЕНИ:
+- Биом: ${tribe.biome} (${tribe.biomeDesc})
+- География: ${tribe.geography} (${tribe.geographyDesc})
+- Черта племени: ${tribe.trait} (${tribe.traitDesc})
+- Поблизости: ${tribe.nearby} (${tribe.nearbyDesc})
+- Текущий ход: ${turn} (каждый ход ≈ одно поколение жизни)
+
+ТЕКУЩЕЕ СОСТОЯНИЕ ПЛЕМЕНИ:
+${me.summary || 'Племя только начинает свой путь в каменном веке.'}`;
+
+        // История выборов
+        if (me.history && me.history.length > 0) {
+            const lastChoices = me.history.slice(-3); // последние 3 хода
+            prompt += `\n\nПОСЛЕДНИЕ РЕШЕНИЯ ПЛЕМЕНИ:`;
+            lastChoices.forEach(h => {
+                prompt += `\n- Ход ${h.turn}: Наука: "${h.science}", Действие: "${h.social}"`;
+                if (h.diplomacy) prompt += `, Дипломатия: "${h.diplomacy}"`;
+            });
+        }
+
+        // Сосед (с 5 хода)
+        let hasNeighbor = false;
+        let neighborData = null;
+        if (turn >= 5) {
+            const neighbor = getNeighbor(currentUser, players);
+            if (neighbor && gameData.players[neighbor]) {
+                hasNeighbor = true;
+                neighborData = gameData.players[neighbor];
+                prompt += `\n\nСОСЕДНЕЕ ПЛЕМЯ "${neighbor}":
+${neighborData.summary || 'Информации мало.'}`;
+            }
+        }
+
+        prompt += `\n\nТВОЯ ЗАДАЧА:
+1. Напиши короткий атмосферный нарратив (2-3 предложения) о том, что происходит с племенем в эту эпоху.
+2. Предложи 3 варианта научного/изыскательского интереса — что племя может попытаться понять или изобрести. Варианты должны логично вытекать из биома, географии, черты и текущего развития.
+3. Предложи 3 варианта социально-поведенческого действия — как племя организует свою жизнь.`;
+
+        if (hasNeighbor) {
+            prompt += `\n4. Предложи 3 варианта дипломатического действия по отношению к соседнему племени.`;
+        }
+
+        prompt += `\n\nОТВЕТЬ СТРОГО в формате JSON (и ничего кроме JSON):
+{
+  "narrative": "Атмосферный текст 2-3 предложения",
+  "summary": "Обновлённое описание текущего состояния племени, 4-5 предложений, учитывая всю историю",
+  "science": [
+    {"title": "Короткое название", "description": "Описание в 1-2 предложения"},
+    {"title": "...", "description": "..."},
+    {"title": "...", "description": "..."}
+  ],
+  "social": [
+    {"title": "Короткое название", "description": "Описание в 1-2 предложения"},
+    {"title": "...", "description": "..."},
+    {"title": "...", "description": "..."}
+  ]${hasNeighbor ? `,
+  "diplomacy": [
+    {"title": "Короткое название", "description": "Описание в 1-2 предложения"},
+    {"title": "...", "description": "..."},
+    {"title": "...", "description": "..."}
+  ]` : ''}
+}`;
+
+        try {
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': window.location.href,
+                    'X-Title': 'Tribes Game'
+                },
+                body: JSON.stringify({
+                    model: 'openrouter/free',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'Ты генератор контента для игры. Отвечай ТОЛЬКО валидным JSON. Никакого текста до или после JSON.'
+                        },
+                        {
+                            role: 'user',
+                            content: prompt
+                        }
+                    ],
+                    temperature: 0.8,
+                    max_tokens: 1500
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('LLM Error:', data.error);
+                await db.ref('game/players/' + currentUser + '/llmLoading').set(false);
+                alert('Ошибка LLM: ' + (data.error.message || JSON.stringify(data.error)));
+                return;
+            }
+
+            let content = data.choices[0].message.content;
+
+            // Извлекаем JSON из ответа
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                console.error('No JSON in response:', content);
+                await db.ref('game/players/' + currentUser + '/llmLoading').set(false);
+                alert('LLM не вернул JSON. Попробуй ещё раз.');
+                return;
+            }
+
+            const parsed = JSON.parse(jsonMatch[0]);
+
+            // Валидация
+            if (!parsed.science || !parsed.social || !parsed.narrative || !parsed.summary) {
+                console.error('Invalid JSON structure:', parsed);
+                await db.ref('game/players/' + currentUser + '/llmLoading').set(false);
+                alert('LLM вернул неполный ответ. Попробуй ещё раз.');
+                return;
+            }
+
+            // Сохраняем в базу
+            await db.ref('game/players/' + currentUser).update({
+                llmResponse: parsed,
+                llmLoading: false
+            });
+
+        } catch (err) {
+            console.error('Request failed:', err);
+            await db.ref('game/players/' + currentUser + '/llmLoading').set(false);
+            alert('Ошибка запроса: ' + err.message);
+        }
+    }
+
+    // =============================================
+    // END TURN
+    // =============================================
+    function showConfirmModal() {
+        const me = gameData.players[currentUser];
+        if (!me.llmResponse) return;
+
+        const sciTitle = me.llmResponse.science[selectedScience]?.title || '?';
+        const socTitle = me.llmResponse.social[selectedSocial]?.title || '?';
+        let text = `Наука: "${sciTitle}"\nДействие: "${socTitle}"`;
+
+        if (selectedDiplo !== null && me.llmResponse.diplomacy) {
+            text += `\nДипломатия: "${me.llmResponse.diplomacy[selectedDiplo]?.title || '?'}"`;
+        }
+
+        document.getElementById('confirm-summary').textContent = text;
+        document.getElementById('confirm-modal').classList.add('active');
+    }
+
+    async function endTurn() {
+        hideModals();
+
+        const me = gameData.players[currentUser];
+        const turn = gameData.turn || 1;
+
+        const scienceChoice = me.llmResponse.science[selectedScience].title;
+        const socialChoice = me.llmResponse.social[selectedSocial].title;
+        let diploChoice = null;
+        if (selectedDiplo !== null && me.llmResponse.diplomacy) {
+            diploChoice = me.llmResponse.diplomacy[selectedDiplo].title;
+        }
+
+        // Записываем в историю
+        const historyEntry = {
+            turn: turn,
+            science: scienceChoice,
+            social: socialChoice,
+            diplomacy: diploChoice
+        };
+
+        const currentHistory = me.history || [];
+        currentHistory.push(historyEntry);
+
+        // Обновляем summary из ответа LLM
+        const newSummary = me.llmResponse.summary || me.summary;
+
+        await db.ref('game/players/' + currentUser).update({
+            turnDone: true,
+            turnChoices: historyEntry,
+            summary: newSummary,
+            history: currentHistory
+        });
+
+        // Сброс локальных выборов
+        selectedScience = null;
+        selectedSocial = null;
+        selectedDiplo = null;
+
+        // Проверяем все ли сходили
+        const snap = await db.ref('game/players').once('value');
+        const players = snap.val();
+        const allDone = Object.keys(players).every(n => players[n].turnDone);
+
+        if (allDone) {
+            await processTurnEnd(players);
+        }
+    }
+
+    async function processTurnEnd(players) {
+        const updates = {};
+        const nextTurn = (gameData.turn || 1) + 1;
+
+        Object.keys(players).forEach(name => {
+            updates['game/players/' + name + '/turnDone'] = false;
+            updates['game/players/' + name + '/llmResponse'] = null;
+            updates['game/players/' + name + '/llmLoading'] = false;
+            updates['game/players/' + name + '/turnChoices'] = null;
+        });
+
+        updates['game/turn'] = nextTurn;
+        await db.ref().update(updates);
+    }
+
+    // =============================================
+    // SCOREBOARD
+    // =============================================
+    function renderScoreboard(players) {
+        const tbody = document.getElementById('scoreboard-body');
+        let html = '';
+        players.forEach(name => {
+            const p = gameData.players[name];
+            const isMe = name === currentUser;
+            const isAdmin = gameData.admin === name;
+            const histLen = (p.history || []).length;
+
+            html += `<tr>
+                <td class="${isMe ? 'me' : ''}">${isAdmin ? '👑 ' : ''}${name}</td>
+                <td>${p.tribe ? p.tribe.biome : '—'}</td>
+                <td>${histLen} решений</td>
+                <td>${p.turnDone ? '✅' : (p.llmLoading ? '⏳' : (p.llmResponse ? '🟢' : '⬜'))}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    // =============================================
+    // ADMIN
+    // =============================================
+    function showKickConfirm(name) {
+        kickTarget = name;
+        document.getElementById('kick-name').textContent = name;
+        document.getElementById('kick-modal').classList.add('active');
+    }
+
+    function confirmKick() {
+        hideModals();
+        if (kickTarget) resetGameData();
+    }
+
+    function showResetConfirm() {
+        document.getElementById('reset-modal').classList.add('active');
+    }
+
+    function resetGame() {
+        hideModals();
+        resetGameData();
+    }
+
+    function resetGameData() {
+        db.ref('game').remove().then(() => {
+            currentUser = null;
+            localStorage.removeItem('tribes_username');
+            selectedScience = null;
+            selectedSocial = null;
+            selectedDiplo = null;
+            showScreen('login');
+            document.getElementById('login-error').textContent = 'Игра сброшена.';
+        });
+    }
+
+    // =============================================
+    // MODALS
+    // =============================================
+    function hideModals() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+        o.addEventListener('click', e => { if (e.target === o) hideModals(); });
+    });
+
     </script>
 </body>
 </html>
