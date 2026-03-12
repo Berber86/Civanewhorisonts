@@ -6,38 +6,32 @@
     <title>Tribes — Пошаговая стратегия</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0d1117;
-            color: #e0e0e0;
-            min-height: 100vh;
+            background: #0d1117; color: #e0e0e0; min-height: 100vh;
         }
-
-        .api-bar {
-            background: #161b22;
-            padding: 8px 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid #30363d;
-            font-size: 0.85em;
+        .top-bar {
+            background: #161b22; padding: 8px 15px; display: flex;
+            align-items: center; gap: 10px; border-bottom: 1px solid #30363d; font-size: 0.85em;
+            flex-wrap: wrap;
         }
-        .api-bar label { color: #888; white-space: nowrap; }
-        .api-bar input {
-            flex: 1; padding: 5px 10px; background: #0d1117;
+        .top-bar label { color: #888; white-space: nowrap; }
+        .top-bar input {
+            flex: 1; min-width: 150px; padding: 5px 10px; background: #0d1117;
             border: 1px solid #30363d; border-radius: 5px; color: #e0e0e0; font-size: 0.9em;
         }
-        .api-bar .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #f85149; }
-        .api-bar .status-dot.ok { background: #3fb950; }
-
+        .top-bar .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #f85149; }
+        .top-bar .status-dot.ok { background: #3fb950; }
+        .top-bar .reset-all-btn {
+            padding: 4px 14px; background: #8b0000; color: #fff; border: none;
+            border-radius: 5px; cursor: pointer; font-size: 0.85em; white-space: nowrap;
+        }
+        .top-bar .reset-all-btn:hover { background: #a00; }
         .container { max-width: 750px; margin: 0 auto; padding: 15px; }
-
         h1 { color: #e94560; text-align: center; margin-bottom: 5px; }
         h2 { color: #e94560; margin-bottom: 15px; }
         h3 { color: #c9d1d9; margin-bottom: 10px; }
         .subtitle { text-align: center; color: #888; margin-bottom: 25px; }
-
         .btn {
             padding: 12px 24px; font-size: 1.1em; border: none; border-radius: 10px;
             cursor: pointer; transition: 0.2s; font-weight: bold;
@@ -49,15 +43,11 @@
         .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
         .btn-secondary:hover:not(:disabled) { background: #30363d; }
         .btn-full { width: 100%; }
-
         .card {
             background: #161b22; border: 1px solid #30363d;
             border-radius: 12px; padding: 15px; margin-bottom: 12px;
         }
-
         .error-text { color: #f85149; margin-top: 10px; text-align: center; }
-
-        /* LOGIN */
         #login-screen { text-align: center; padding-top: 60px; }
         #login-screen input {
             width: 100%; padding: 15px; font-size: 1.2em;
@@ -65,8 +55,6 @@
             background: #161b22; color: #fff; outline: none; margin-bottom: 15px;
         }
         #login-screen input:focus { border-color: #e94560; }
-
-        /* TRIBE GEN */
         #tribe-screen { display: none; }
         .tribe-traits { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .trait-card {
@@ -78,8 +66,6 @@
         .trait-card .trait-value { font-size: 1em; font-weight: bold; }
         .tribe-buttons { display: flex; gap: 10px; }
         .tribe-buttons .btn { flex: 1; }
-
-        /* WAITING */
         #waiting-screen { display: none; text-align: center; }
         .players-grid { display: grid; gap: 10px; margin: 20px 0; }
         .player-slot {
@@ -91,8 +77,6 @@
         .status-badge.ready { background: #238636; color: white; }
         .status-badge.waiting { background: #e3b341; color: black; }
         .status-badge.empty-badge { background: #30363d; color: #888; }
-
-        /* GAME */
         #game-screen { display: none; }
         .game-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -102,8 +86,6 @@
             background: #e94560; color: white; padding: 6px 16px;
             border-radius: 20px; font-weight: bold;
         }
-
-        /* RESOURCES GRID */
         .resources-grid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;
         }
@@ -118,13 +100,10 @@
         .res-box .res-change { font-size: 0.75em; margin-top: 2px; }
         .res-change.pos { color: #3fb950; }
         .res-change.neg { color: #f85149; }
-
         .res-food .res-val { color: #f0a050; }
         .res-mat .res-val { color: #a0a0a0; }
         .res-know .res-val { color: #4fc3f7; }
         .res-spirit .res-val { color: #ce93d8; }
-
-        /* PARAMS GRID */
         .params-grid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;
         }
@@ -144,8 +123,6 @@
         .fill-red { background: #f85149; }
         .fill-blue { background: #58a6ff; }
         .fill-purple { background: #bc8cff; }
-
-        /* SETTLERS */
         .settlers-panel { margin-bottom: 12px; }
         .settlers-panel h3 { font-size: 0.95em; margin-bottom: 8px; }
         .settlers-info {
@@ -169,38 +146,21 @@
         .settler-controls button:hover:not(:disabled) { border-color: #e94560; background: #e94560; }
         .settler-controls button:disabled { opacity: 0.3; cursor: not-allowed; }
         .settler-count { font-size: 1.3em; font-weight: bold; width: 24px; text-align: center; }
-
-        /* CONSUMPTION WARNING */
         .consumption-info {
             background: #1a1500; border: 1px solid #e3b341; border-radius: 8px;
             padding: 10px; margin-bottom: 12px; font-size: 0.85em; color: #e3b341;
         }
-        .consumption-info.danger {
-            background: #1a0500; border-color: #f85149; color: #f85149;
-        }
-
-        /* SUMMARY */
+        .consumption-info.danger { background: #1a0500; border-color: #f85149; color: #f85149; }
         .tribe-summary {
             background: #1a1f2e; border-left: 4px solid #e94560;
             padding: 12px 16px; margin-bottom: 12px;
             border-radius: 0 10px 10px 0; font-size: 0.9em; line-height: 1.5; color: #b0b8c4;
         }
-
-        /* NARRATIVE */
         .narrative-block {
             background: #111820; border: 1px solid #1f4a6e; border-radius: 10px;
             padding: 12px 16px; margin-bottom: 12px; line-height: 1.6;
             color: #a0b8d0; font-style: italic; font-size: 0.9em;
         }
-
-        /* EVENT */
-        .event-block {
-            background: #1a1020; border: 1px solid #9c27b0; border-radius: 10px;
-            padding: 12px 16px; margin-bottom: 12px; font-size: 0.9em; color: #d0a0e0;
-        }
-        .event-block h4 { color: #ce93d8; margin-bottom: 5px; }
-
-        /* CHOICES */
         .choices-section { margin-bottom: 15px; }
         .choices-section h3 {
             display: flex; align-items: center; gap: 8px;
@@ -216,17 +176,10 @@
         .choice-option.selected { border-color: #e94560; background: #2a1520; }
         .choice-title { font-weight: bold; margin-bottom: 4px; font-size: 0.95em; }
         .choice-desc { font-size: 0.85em; color: #888; margin-bottom: 6px; }
-        .choice-effects {
-            display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.8em;
-        }
-        .effect-tag {
-            padding: 2px 8px; border-radius: 12px; font-size: 0.85em;
-        }
+        .choice-effects { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.8em; }
+        .effect-tag { padding: 2px 8px; border-radius: 12px; font-size: 0.85em; }
         .effect-tag.positive { background: #0a2d00; color: #3fb950; border: 1px solid #238636; }
         .effect-tag.negative { background: #2d0a00; color: #f85149; border: 1px solid #8b0000; }
-        .effect-tag.neutral { background: #1a1a2e; color: #58a6ff; border: 1px solid #1f4a6e; }
-
-        /* BUTTONS */
         #end-turn-btn {
             width: 100%; padding: 18px; font-size: 1.3em; font-weight: bold;
             background: #e94560; color: white; border: none; border-radius: 15px;
@@ -234,7 +187,6 @@
         }
         #end-turn-btn:hover:not(:disabled) { background: #c73650; transform: scale(1.02); }
         #end-turn-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; transform: none; }
-
         #regen-btn {
             width: 100%; padding: 10px; font-size: 0.95em;
             background: #1f3a5f; color: #58a6ff; border: 1px solid #58a6ff;
@@ -242,8 +194,6 @@
         }
         #regen-btn:hover:not(:disabled) { background: #253d5e; }
         #regen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* STATUS */
         .turn-status-bar {
             text-align: center; padding: 10px; border-radius: 10px;
             margin-bottom: 12px; font-size: 0.9em;
@@ -251,8 +201,6 @@
         .turn-status-bar.waiting-others { background: #2a2000; border: 1px solid #e3b341; color: #e3b341; }
         .turn-status-bar.your-turn { background: #0a2d00; border: 1px solid #3fb950; color: #3fb950; }
         .turn-status-bar.processing { background: #1a1a2e; border: 1px solid #58a6ff; color: #58a6ff; }
-
-        /* SCOREBOARD */
         .scoreboard { margin-top: 12px; }
         .scoreboard table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
         .scoreboard th { color: #888; font-size: 0.8em; padding: 6px 4px; text-align: center; border-bottom: 1px solid #30363d; }
@@ -260,16 +208,12 @@
         .scoreboard td { padding: 8px 4px; border-bottom: 1px solid #21262d; text-align: center; }
         .scoreboard td:first-child { text-align: left; }
         .scoreboard .me { color: #e94560; font-weight: bold; }
-
-        /* NEIGHBOR */
         .neighbor-info {
             background: #1a1520; border: 1px solid #ce93d8; border-radius: 10px;
             padding: 12px; margin-bottom: 12px;
         }
         .neighbor-info h4 { color: #ce93d8; margin-bottom: 6px; font-size: 0.9em; }
         .neighbor-info .neighbor-desc { font-size: 0.85em; color: #a088b0; }
-
-        /* ADMIN */
         .admin-panel {
             background: #2a1515; border: 1px solid #f85149; border-radius: 10px;
             padding: 12px; margin-top: 12px;
@@ -281,13 +225,6 @@
             border: none; border-radius: 5px; cursor: pointer; font-size: 0.8em;
         }
         .kick-btn:hover { background: #a00; }
-        .reset-btn {
-            width: 100%; padding: 8px; margin-top: 8px; background: #600;
-            color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em;
-        }
-        .reset-btn:hover { background: #800; }
-
-        /* MODALS */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75); justify-content: center; align-items: center; z-index: 1000;
@@ -307,12 +244,10 @@
         .btn-confirm:hover { background: #c73650; }
         .btn-cancel { background: #21262d; color: #888; }
         .btn-cancel:hover { background: #30363d; }
-
         .llm-error-bar {
             background: #3d1515; border: 1px solid #f85149; color: #f85149;
             padding: 10px; border-radius: 8px; margin-bottom: 12px; text-align: center; font-size: 0.85em;
         }
-
         .spinner {
             display: inline-block; width: 18px; height: 18px;
             border: 2px solid #30363d; border-top-color: #e94560;
@@ -320,12 +255,8 @@
             margin-right: 6px; vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .hidden { display: none !important; }
-
-        .history-toggle {
-            text-align: center; margin: 8px 0;
-        }
+        .history-toggle { text-align: center; margin: 8px 0; }
         .history-toggle button {
             background: none; border: 1px solid #30363d; color: #888;
             padding: 4px 16px; border-radius: 15px; cursor: pointer; font-size: 0.8em;
@@ -340,15 +271,14 @@
 </head>
 <body>
 
-<div class="api-bar">
-    <label>🔑 Hydra API:</label>
-    <input type="password" id="api-key-input" placeholder="Вставь API ключ..." oninput="saveApiKey()">
+<div class="top-bar">
+    <label>🔑 Hydra:</label>
+    <input type="password" id="api-key-input" placeholder="API ключ..." oninput="saveApiKey()">
     <div class="status-dot" id="api-status"></div>
+    <button class="reset-all-btn" onclick="showResetConfirm()">🗑️ Сброс игры</button>
 </div>
 
 <div class="container">
-
-    <!-- LOGIN -->
     <div id="login-screen">
         <h1>🏛️ Tribes</h1>
         <p class="subtitle">Стратегия каменного века • 3 игрока</p>
@@ -357,7 +287,6 @@
         <div class="error-text" id="login-error"></div>
     </div>
 
-    <!-- TRIBE GEN -->
     <div id="tribe-screen">
         <h2 style="text-align:center">🎲 Генерация племени</h2>
         <p class="subtitle">Судьба определяет начало пути</p>
@@ -368,35 +297,21 @@
         </div>
     </div>
 
-    <!-- WAITING -->
     <div id="waiting-screen">
         <h2>⏳ Ожидание игроков</h2>
-        <p class="subtitle">Игра начнётся когда все будут готовы</p>
+        <p class="subtitle">Игра начнётся когда соберутся все</p>
         <div class="players-grid" id="waiting-players"></div>
-        <div id="waiting-admin"></div>
     </div>
 
-    <!-- GAME -->
     <div id="game-screen">
         <div class="game-header">
             <h2 style="margin:0;font-size:1.3em">🏛️ Tribes</h2>
-            <div>
-                <span class="turn-badge">Ход <span id="turn-number">1</span></span>
-            </div>
+            <div class="turn-badge">Ход <span id="turn-number">1</span></div>
         </div>
-
         <div class="llm-error-bar hidden" id="llm-error-bar"></div>
-
-        <!-- RESOURCES -->
         <div class="resources-grid" id="resources-grid"></div>
-
-        <!-- PARAMS -->
         <div class="params-grid" id="params-grid"></div>
-
-        <!-- CONSUMPTION -->
         <div id="consumption-info" class="consumption-info hidden"></div>
-
-        <!-- SETTLERS -->
         <div class="settlers-panel card" id="settlers-panel">
             <h3>👥 Распределение поселенцев</h3>
             <div class="settlers-info">
@@ -405,29 +320,13 @@
             </div>
             <div id="settler-rows"></div>
         </div>
-
-        <!-- SUMMARY -->
         <div class="tribe-summary" id="tribe-summary"></div>
-
-        <!-- NEIGHBOR -->
         <div class="neighbor-info hidden" id="neighbor-info">
             <h4>🏕️ Сосед: <span id="neighbor-name"></span></h4>
             <div class="neighbor-desc" id="neighbor-desc"></div>
         </div>
-
-        <!-- NARRATIVE -->
         <div class="narrative-block hidden" id="narrative-block"></div>
-
-        <!-- EVENT -->
-        <div class="event-block hidden" id="event-block">
-            <h4>⚡ Событие</h4>
-            <div id="event-text"></div>
-        </div>
-
-        <!-- STATUS -->
         <div class="turn-status-bar" id="turn-status-bar"></div>
-
-        <!-- CHOICES -->
         <div class="choices-section hidden" id="science-choices">
             <h3>🔬 Изыскания <span class="choices-count" id="science-slots"></span></h3>
             <div id="science-options"></div>
@@ -440,38 +339,24 @@
             <h3>🤝 Дипломатия <span class="choices-count" id="diplo-slots"></span></h3>
             <div id="diplo-options"></div>
         </div>
-
-        <!-- BUTTONS -->
         <button id="end-turn-btn" onclick="showConfirmModal()" disabled>⚔️ ЗАВЕРШИТЬ ХОД</button>
         <button id="regen-btn" onclick="regenerateLLM()" class="hidden">🔄 Перегенерировать</button>
-
-        <!-- SCOREBOARD -->
         <div class="scoreboard card">
             <h3 style="font-size:0.9em">📊 Все племена</h3>
             <table>
-                <thead>
-                    <tr><th>Племя</th><th>👥</th><th>🍖</th><th>🪨</th><th>🔬</th><th>🌙</th><th>Ход</th></tr>
-                </thead>
+                <thead><tr><th>Племя</th><th>👥</th><th>🍖</th><th>🪨</th><th>🔬</th><th>🌙</th><th>Ход</th></tr></thead>
                 <tbody id="scoreboard-body"></tbody>
             </table>
         </div>
-
-        <!-- HISTORY -->
-        <div class="history-toggle">
-            <button onclick="toggleHistory()">📜 История решений</button>
-        </div>
+        <div class="history-toggle"><button onclick="toggleHistory()">📜 История решений</button></div>
         <div class="history-list hidden" id="history-list"></div>
-
-        <!-- ADMIN -->
         <div class="admin-panel hidden" id="admin-panel">
             <h4>👑 Админ</h4>
             <div id="admin-players"></div>
-            <button class="reset-btn" onclick="showResetConfirm()">🗑️ СБРОСИТЬ</button>
         </div>
     </div>
 </div>
 
-<!-- MODALS -->
 <div class="modal-overlay" id="confirm-modal">
     <div class="modal">
         <h3>Завершить ход?</h3>
@@ -484,8 +369,7 @@
 </div>
 <div class="modal-overlay" id="reset-modal">
     <div class="modal">
-        <h3>⚠️ Сбросить игру?</h3>
-        <p>Все данные удалятся!</p>
+        <h3>⚠️ Сбросить игру?</h3><p>ВСЕ данные удалятся. Все игроки будут разлогинены.</p>
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="hideModals()">Отмена</button>
             <button class="btn-confirm" onclick="resetGame()">Сбросить</button>
@@ -495,7 +379,7 @@
 <div class="modal-overlay" id="kick-modal">
     <div class="modal">
         <h3>Кикнуть?</h3>
-        <p>Игрок <strong id="kick-name"></strong> будет удалён. Игра сбросится!</p>
+        <p>Игрок <strong id="kick-name"></strong> удалён. Игра сбросится!</p>
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="hideModals()">Отмена</button>
             <button class="btn-confirm" onclick="confirmKick()">Кикнуть</button>
@@ -507,7 +391,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// ===== FIREBASE =====
 firebase.initializeApp({
     apiKey: "AIzaSyDU4YCIWRFLjMz2eDqmKgoGEYKbQUb5s4U",
     authDomain: "prototypeciva.firebaseapp.com",
@@ -519,12 +402,11 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-// ===== POOLS =====
 const POOLS = {
     biome: [
-        { name:"Густые джунгли", icon:"🌴", desc:"Влажные тропики, полные жизни и опасностей" },
+        { name:"Густые джунгли", icon:"🌴", desc:"Влажные тропики полные жизни" },
         { name:"Бескрайняя степь", icon:"🌾", desc:"Открытые равнины под высоким небом" },
-        { name:"Хвойная тайга", icon:"🌲", desc:"Суровые северные леса с коротким летом" },
+        { name:"Хвойная тайга", icon:"🌲", desc:"Суровые северные леса" },
         { name:"Каменистая пустыня", icon:"🏜️", desc:"Сухая земля с редкими оазисами" },
         { name:"Болотистые топи", icon:"🐊", desc:"Мрачные заболоченные низины" },
         { name:"Саванна", icon:"🦁", desc:"Жаркие луга с островками деревьев" },
@@ -533,11 +415,11 @@ const POOLS = {
     ],
     geography: [
         { name:"Великая река", icon:"🌊", desc:"Широкая река с плодородными берегами" },
-        { name:"Морское побережье", icon:"🏖️", desc:"Берег солёного моря с приливами" },
+        { name:"Морское побережье", icon:"🏖️", desc:"Берег солёного моря" },
         { name:"Высокие горы", icon:"🏔️", desc:"Неприступные скалы с пещерами" },
-        { name:"Действующий вулкан", icon:"🌋", desc:"Огненная гора, страх и плодородный пепел" },
+        { name:"Действующий вулкан", icon:"🌋", desc:"Огненная гора и плодородный пепел" },
         { name:"Глубокое озеро", icon:"💧", desc:"Огромное пресное озеро" },
-        { name:"Каньон", icon:"🪨", desc:"Глубокое ущелье с отвесными стенами" },
+        { name:"Каньон", icon:"🪨", desc:"Глубокое ущелье" },
         { name:"Скальные пещеры", icon:"🕳️", desc:"Система пещер для укрытия" },
         { name:"Термальные источники", icon:"♨️", desc:"Горячие ключи из-под земли" }
     ],
@@ -555,8 +437,8 @@ const POOLS = {
         { name:"Стада диких быков", icon:"🐂", desc:"Стада мощных животных" },
         { name:"Стая хищников", icon:"🐺", desc:"Опасные звери неподалёку" },
         { name:"Северное сияние", icon:"🌌", desc:"Мистический свет в небе" },
-        { name:"Ядовитые растения", icon:"☠️", desc:"Красивые, но смертельные заросли" },
-        { name:"Залежи кремня", icon:"🔥", desc:"Камень, высекающий искры" },
+        { name:"Ядовитые растения", icon:"☠️", desc:"Красивые но смертельные" },
+        { name:"Залежи кремня", icon:"🔥", desc:"Камень высекающий искры" },
         { name:"Медовые пчёлы", icon:"🐝", desc:"Дикие ульи со сладким золотом" },
         { name:"Глиняные берега", icon:"🏺", desc:"Мягкая глина для лепки" },
         { name:"Обсидиановые россыпи", icon:"🖤", desc:"Вулканическое стекло острее камня" }
@@ -564,93 +446,60 @@ const POOLS = {
 };
 
 const MAX_PLAYERS = 3;
+const FOOD_PER_POP = 0.5; // потребление на жителя
 
-// ===== GAME CONSTANTS =====
 const RESOURCE_DEFS = [
-    { key:'food', icon:'🍖', label:'Еда', color:'#f0a050' },
-    { key:'materials', icon:'🪨', label:'Материалы', color:'#a0a0a0' },
-    { key:'knowledge', icon:'🔬', label:'Знания', color:'#4fc3f7' },
-    { key:'spirit', icon:'🌙', label:'Духовность', color:'#ce93d8' }
+    { key:'food', icon:'🍖', label:'Еда' },
+    { key:'materials', icon:'🪨', label:'Материалы' },
+    { key:'knowledge', icon:'🔬', label:'Знания' },
+    { key:'spirit', icon:'🌙', label:'Духовность' }
 ];
-
 const PARAM_DEFS = [
-    { key:'health', icon:'❤️', label:'Здоровье', maxVal:100, fillClass:'fill-red' },
-    { key:'happiness', icon:'😊', label:'Счастье', maxVal:100, fillClass:'fill-yellow' },
-    { key:'safety', icon:'🛡️', label:'Безопасность', maxVal:100, fillClass:'fill-blue' },
-    { key:'cohesion', icon:'🤝', label:'Сплочённость', maxVal:100, fillClass:'fill-purple' }
+    { key:'health', icon:'❤️', label:'Здоровье', fillClass:'fill-red' },
+    { key:'happiness', icon:'😊', label:'Счастье', fillClass:'fill-yellow' },
+    { key:'safety', icon:'🛡️', label:'Безопасность', fillClass:'fill-blue' },
+    { key:'cohesion', icon:'🤝', label:'Сплочённость', fillClass:'fill-purple' }
 ];
 
 function defaultPlayerData() {
     return {
-        tribeConfirmed: false,
-        tribe: null,
-        summary: '',
-        history: [],
-        turnDone: false,
-        turnChoices: null,
-        llmResponse: null,
-        llmLoading: false,
-        llmError: null,
-        // Resources
-        food: 10,
-        materials: 5,
-        knowledge: 0,
-        spirit: 0,
-        // Multipliers
-        mult_food: 1.0,
-        mult_materials: 1.0,
-        mult_knowledge: 1.0,
-        mult_spirit: 1.0,
-        // Params (0-100)
-        health: 70,
-        happiness: 60,
-        safety: 40,
-        cohesion: 50,
-        // Population
+        tribeConfirmed: false, tribe: null, summary: '',
+        history: [], turnDone: false, turnChoices: null,
+        llmResponse: null, llmLoading: false, llmError: null,
+        food: 10, materials: 5, knowledge: 0, spirit: 0,
+        mult_food: 1.0, mult_materials: 1.0, mult_knowledge: 1.0, mult_spirit: 1.0,
+        health: 75, happiness: 65, safety: 50, cohesion: 55,
         population: 5,
-        // Settlers assignment (saved each turn)
         settlers: { food: 2, materials: 1, knowledge: 1, spirit: 1 },
         joinedAt: Date.now()
     };
 }
 
-// ===== GLOBALS =====
-let currentUser = null;
-let gameData = null;
-let currentTribe = null;
-let selectedScience = null;
-let selectedSocial = null;
-let selectedDiplo = null;
-let kickTarget = null;
-let llmRequestInProgress = false;
+let currentUser = null, gameData = null, currentTribe = null;
+let selectedScience = null, selectedSocial = null, selectedDiplo = null;
+let kickTarget = null, llmRequestInProgress = false;
 let localSettlers = { food: 2, materials: 1, knowledge: 1, spirit: 1 };
 let historyVisible = false;
 
-// ===== CHOICE SLOTS =====
 function getChoiceSlots(me) {
-    const k = me.knowledge || 0;
-    const s = me.spirit || 0;
-    const total = k + s;
-    if (total >= 80) return 5;
-    if (total >= 50) return 4;
-    if (total >= 25) return 3;
+    const t = (me.knowledge||0) + (me.spirit||0);
+    if (t >= 80) return 5;
+    if (t >= 50) return 4;
+    if (t >= 25) return 3;
     return 2;
 }
 
-// ===== FOOD CONSUMPTION =====
-function getFoodConsumption(me) {
-    return me.population || 5;
+function getFoodCost(me) {
+    return Math.round((me.population || 5) * FOOD_PER_POP * 10) / 10;
 }
 
-// ===== API KEY =====
 function saveApiKey() {
-    const key = document.getElementById('api-key-input').value.trim();
-    localStorage.setItem('tribes_api_key', key);
-    document.getElementById('api-status').className = 'status-dot' + (key ? ' ok' : '');
+    const k = document.getElementById('api-key-input').value.trim();
+    localStorage.setItem('tribes_api_key', k);
+    document.getElementById('api-status').className = 'status-dot' + (k ? ' ok' : '');
 }
 function getApiKey() { return localStorage.getItem('tribes_api_key') || ''; }
 
-// ===== INIT =====
 window.onload = function() {
     const k = getApiKey();
     if (k) { document.getElementById('api-key-input').value = k; document.getElementById('api-status').classList.add('ok'); }
@@ -664,15 +513,12 @@ window.onload = function() {
 };
 document.getElementById('username-input').addEventListener('keypress', e => { if (e.key==='Enter') login(); });
 
-// ===== SCREENS =====
 function showScreen(n) {
-    ['login-screen','tribe-screen','waiting-screen','game-screen'].forEach(id => {
-        document.getElementById(id).style.display = 'none';
-    });
+    ['login-screen','tribe-screen','waiting-screen','game-screen'].forEach(id =>
+        document.getElementById(id).style.display = 'none');
     document.getElementById(n+'-screen').style.display = 'block';
 }
 
-// ===== STATE =====
 function handleState() {
     if (!currentUser) return;
     if (!gameData || !gameData.players || !gameData.players[currentUser]) {
@@ -682,16 +528,25 @@ function handleState() {
         return;
     }
     const me = gameData.players[currentUser];
+
+    // Генерация племени — доступна СРАЗУ, не ждём остальных
     if (!me.tribeConfirmed) { showScreen('tribe'); return; }
+
     const pls = Object.keys(gameData.players);
     const allConf = pls.every(n => gameData.players[n].tribeConfirmed);
-    if (pls.length < MAX_PLAYERS || !allConf) { showScreen('waiting'); renderWaiting(); return; }
+
+    // Ждём только если не все ПОДТВЕРДИЛИ племя (не зарегались — не ждём)
+    if (pls.length < MAX_PLAYERS || !allConf) {
+        showScreen('waiting');
+        renderWaiting();
+        return;
+    }
+
     showScreen('game');
     if (!me.llmResponse && !me.llmLoading && !me.turnDone && !llmRequestInProgress) requestLLM();
     renderGame();
 }
 
-// ===== LOGIN =====
 function login() {
     const name = document.getElementById('username-input').value.trim();
     const err = document.getElementById('login-error');
@@ -701,7 +556,6 @@ function login() {
         const names = Object.keys(pls);
         if (names.includes(name)) {
             currentUser = name; localStorage.setItem('tribes_username', name); err.textContent = '';
-            // Restore local settlers
             if (pls[name].settlers) localSettlers = {...pls[name].settlers};
             handleState();
         } else if (names.length >= MAX_PLAYERS) {
@@ -712,13 +566,13 @@ function login() {
                 if (names.length === 0) { db.ref('game/turn').set(1); db.ref('game/admin').set(name); }
                 currentUser = name; localStorage.setItem('tribes_username', name); err.textContent = '';
                 localSettlers = {...data.settlers};
-                rerollTribe(); handleState();
+                rerollTribe();
+                showScreen('tribe'); // сразу на генерацию!
             });
         }
     });
 }
 
-// ===== TRIBE GEN =====
 function randomFrom(a) { return a[Math.floor(Math.random()*a.length)]; }
 function rerollTribe() {
     currentTribe = {
@@ -731,7 +585,7 @@ function renderTribe() {
     if (!currentTribe) return;
     const t = currentTribe;
     document.getElementById('tribe-traits').innerHTML = [
-        ['biome','БИОМ'], ['geography','ГЕОГРАФИЯ'], ['trait','ЧЕРТА'], ['nearby','РЯДОМ']
+        ['biome','БИОМ'],['geography','ГЕОГРАФИЯ'],['trait','ЧЕРТА'],['nearby','РЯДОМ']
     ].map(([k,l]) => `<div class="trait-card">
         <div class="trait-icon">${t[k].icon}</div>
         <div class="trait-label">${l}</div>
@@ -744,14 +598,14 @@ function acceptTribe() {
     ['biome','geography','trait','nearby'].forEach(k => {
         td[k] = currentTribe[k].name;
         td[k+'Desc'] = currentTribe[k].desc;
-        td[k+'Icon'] = currentTribe[k].icon;
     });
     const sum = `Племя "${currentUser}" — ${td.biome} (${td.biomeDesc}). ${td.geography} (${td.geographyDesc}). ` +
         `Черта: ${td.trait} (${td.traitDesc}). Рядом: ${td.nearby} (${td.nearbyDesc}). Ранний каменный век.`;
-    db.ref('game/players/' + currentUser).update({ tribe: td, tribeConfirmed: true, summary: sum, llmResponse: null, llmLoading: false });
+    db.ref('game/players/' + currentUser).update({
+        tribe: td, tribeConfirmed: true, summary: sum, llmResponse: null, llmLoading: false
+    });
 }
 
-// ===== WAITING =====
 function renderWaiting() {
     if (!gameData?.players) return;
     const pls = Object.keys(gameData.players);
@@ -759,116 +613,107 @@ function renderWaiting() {
     for (let i = 0; i < MAX_PLAYERS; i++) {
         if (i < pls.length) {
             const p = gameData.players[pls[i]];
-            const isMe = pls[i]===currentUser, isA = gameData.admin===pls[i];
-            h += `<div class="player-slot"><span>${isMe?'➤ ':''}${isA?'👑 ':''}${pls[i]}</span>
+            const isMe = pls[i]===currentUser;
+            h += `<div class="player-slot"><span>${isMe?'➤ ':''}${pls[i]}</span>
                 <span class="status-badge ${p.tribeConfirmed?'ready':'waiting'}">${p.tribeConfirmed?'✅ Готов':'🎲...'}</span></div>`;
         } else {
             h += `<div class="player-slot empty"><span>Пусто</span><span class="status-badge empty-badge">${i+1}/${MAX_PLAYERS}</span></div>`;
         }
     }
     document.getElementById('waiting-players').innerHTML = h;
-    const ae = document.getElementById('waiting-admin');
-    if (gameData.admin === currentUser) {
-        let ah = '<div class="admin-panel"><h4>👑 Админ</h4>';
-        pls.forEach(p => { if (p!==currentUser) ah += `<div class="admin-row"><span>${p}</span><button class="kick-btn" onclick="showKickConfirm('${p}')">Кик</button></div>`; });
-        ah += '<button class="reset-btn" onclick="showResetConfirm()">🗑️ Сброс</button></div>';
-        ae.innerHTML = ah;
-    } else ae.innerHTML = '';
 }
 
-// ===== GAME RENDER =====
 function renderGame() {
     if (!gameData?.players?.[currentUser]) return;
     const me = gameData.players[currentUser];
     const turn = gameData.turn || 1;
     const pls = Object.keys(gameData.players);
+    const foodCost = getFoodCost(me);
 
     document.getElementById('turn-number').textContent = turn;
 
     // Resources
-    const foodCons = getFoodConsumption(me);
-    let rgHtml = '';
+    let rg = '';
     RESOURCE_DEFS.forEach(r => {
         const val = Math.floor((me[r.key]||0)*10)/10;
         const mult = me['mult_'+r.key] || 1.0;
         const assigned = localSettlers[r.key] || 0;
-        const gain = Math.floor(assigned * mult * 10) / 10;
-        let change = gain;
-        if (r.key === 'food') change = gain - foodCons;
-        const changeStr = change >= 0 ? `+${change}` : `${change}`;
-        const changeClass = change >= 0 ? 'pos' : 'neg';
-        rgHtml += `<div class="res-box res-${r.key.substring(0,4)}">
+        const gain = Math.round(assigned * mult * 10) / 10;
+        let net = gain;
+        if (r.key === 'food') net = Math.round((gain - foodCost) * 10) / 10;
+        const cs = net >= 0 ? `+${net}` : `${net}`;
+        const cc = net >= 0 ? 'pos' : 'neg';
+        rg += `<div class="res-box res-${r.key.substring(0,4)}">
             <div class="res-icon">${r.icon}</div>
             <div class="res-val">${val}</div>
             <div class="res-label">${r.label}</div>
             <div class="res-mult">×${mult.toFixed(2)}</div>
-            <div class="res-change ${changeClass}">${changeStr}/ход</div>
+            <div class="res-change ${cc}">${cs}/ход</div>
         </div>`;
     });
-    document.getElementById('resources-grid').innerHTML = rgHtml;
+    document.getElementById('resources-grid').innerHTML = rg;
 
     // Params
-    let pgHtml = '';
+    let pg = '';
     PARAM_DEFS.forEach(p => {
-        const v = Math.round(me[p.key] || 0);
+        const v = Math.round(me[p.key]||0);
         const pct = Math.min(100, Math.max(0, v));
         let fc = p.fillClass;
         if (pct < 25) fc = 'fill-red';
-        pgHtml += `<div class="param-box">
+        pg += `<div class="param-box">
             <div class="param-icon">${p.icon}</div>
             <div class="param-val">${v}</div>
             <div class="param-label">${p.label}</div>
             <div class="param-bar"><div class="param-bar-fill ${fc}" style="width:${pct}%"></div></div>
         </div>`;
     });
-    document.getElementById('params-grid').innerHTML = pgHtml;
+    document.getElementById('params-grid').innerHTML = pg;
 
-    // Consumption warning
+    // Consumption
     const consEl = document.getElementById('consumption-info');
-    const foodAfter = (me.food||0) + (localSettlers.food||0) * (me.mult_food||1) - foodCons;
+    const foodGain = (localSettlers.food||0) * (me.mult_food||1);
+    const foodNet = Math.round((foodGain - foodCost) * 10) / 10;
+    const foodAfter = Math.round(((me.food||0) + foodNet) * 10) / 10;
     if (foodAfter < 0) {
-        consEl.classList.remove('hidden');
-        consEl.className = 'consumption-info danger';
-        consEl.textContent = `⚠️ Нехватка еды! Нужно ${foodCons}🍖/ход (по 1 на жителя). После хода будет ${Math.floor(foodAfter*10)/10}🍖 — племя будет голодать!`;
-    } else if (foodAfter < foodCons) {
-        consEl.classList.remove('hidden');
-        consEl.className = 'consumption-info';
-        consEl.textContent = `Потребление: ${foodCons}🍖/ход. Запас пока есть, но будь внимателен.`;
-    } else {
-        consEl.classList.add('hidden');
-    }
+        consEl.classList.remove('hidden'); consEl.className = 'consumption-info danger';
+        consEl.textContent = `⚠️ ГОЛОД! Нужно ${foodCost}🍖/ход (${FOOD_PER_POP}×${me.population||5} жителей). Запас закончится!`;
+    } else if (foodNet < 0) {
+        consEl.classList.remove('hidden'); consEl.className = 'consumption-info';
+        const turnsLeft = Math.floor((me.food||0) / Math.abs(foodNet));
+        consEl.textContent = `⚡ Еды хватит на ~${turnsLeft} ходов. Потребление: ${foodCost}🍖/ход.`;
+    } else { consEl.classList.add('hidden'); }
 
     // Settlers
     const pop = me.population || 5;
     document.getElementById('pop-count').textContent = pop;
-    const totalAssigned = Object.values(localSettlers).reduce((a,b)=>a+b, 0);
-    document.getElementById('free-count').textContent = pop - totalAssigned;
+    const totalA = Object.values(localSettlers).reduce((a,b)=>a+b,0);
+    document.getElementById('free-count').textContent = pop - totalA;
 
-    let srHtml = '';
+    let sr = '';
     RESOURCE_DEFS.forEach(r => {
         const cnt = localSettlers[r.key] || 0;
         const mult = me['mult_'+r.key] || 1.0;
-        const yield_ = Math.floor(cnt * mult * 10) / 10;
-        srHtml += `<div class="settler-row">
+        const y = Math.round(cnt * mult * 10) / 10;
+        let extra = '';
+        if (r.key === 'food') extra = ` (−${foodCost} потребление)`;
+        sr += `<div class="settler-row">
             <div>
                 <div class="settler-label">${r.icon} ${r.label}</div>
-                <div class="settler-yield">= ${yield_} за ход (×${mult.toFixed(2)})</div>
+                <div class="settler-yield">= ${y}/ход (×${mult.toFixed(2)})${extra}</div>
             </div>
             <div class="settler-controls">
                 <button onclick="changeSettler('${r.key}',-1)" ${cnt<=0?'disabled':''}>−</button>
                 <span class="settler-count">${cnt}</span>
-                <button onclick="changeSettler('${r.key}',1)" ${totalAssigned>=pop?'disabled':''}>+</button>
+                <button onclick="changeSettler('${r.key}',1)" ${totalA>=pop?'disabled':''}>+</button>
             </div>
         </div>`;
     });
-    document.getElementById('settler-rows').innerHTML = srHtml;
+    document.getElementById('settler-rows').innerHTML = sr;
 
-    // Disable settlers panel if turn done
     const sp = document.getElementById('settlers-panel');
-    if (me.turnDone) { sp.style.opacity='0.5'; sp.style.pointerEvents='none'; }
-    else { sp.style.opacity='1'; sp.style.pointerEvents='auto'; }
+    sp.style.opacity = me.turnDone ? '0.5' : '1';
+    sp.style.pointerEvents = me.turnDone ? 'none' : 'auto';
 
-    // Summary
     document.getElementById('tribe-summary').textContent = me.summary || 'Начало пути...';
 
     // Neighbor
@@ -882,12 +727,10 @@ function renderGame() {
         }
     } else nEl.classList.add('hidden');
 
-    // Error
     const errBar = document.getElementById('llm-error-bar');
     if (me.llmError) { errBar.classList.remove('hidden'); errBar.textContent = '⚠️ ' + me.llmError; }
     else errBar.classList.add('hidden');
 
-    // Status
     const doneC = pls.filter(n => gameData.players[n].turnDone).length;
     const sBar = document.getElementById('turn-status-bar');
     if (me.turnDone) {
@@ -904,29 +747,20 @@ function renderGame() {
         sBar.innerHTML=`<span class="spinner"></span> Запрос...`;
     }
 
-    // Narrative
     const narrEl = document.getElementById('narrative-block');
     if (me.llmResponse?.narrative) { narrEl.classList.remove('hidden'); narrEl.textContent = me.llmResponse.narrative; }
     else narrEl.classList.add('hidden');
 
-    // Event
-    const evEl = document.getElementById('event-block');
-    if (me.llmResponse?.event) { evEl.classList.remove('hidden'); document.getElementById('event-text').textContent = me.llmResponse.event; }
-    else evEl.classList.add('hidden');
-
-    // Choices
     renderChoices(me, turn);
     updateEndTurnButton(me, turn);
 
-    // Regen
     const rb = document.getElementById('regen-btn');
     if (me.llmResponse && !me.turnDone) { rb.classList.remove('hidden'); rb.disabled = llmRequestInProgress; }
     else rb.classList.add('hidden');
 
-    // Scoreboard
     renderScoreboard(pls);
 
-    // Admin
+    // Admin panel
     const ap = document.getElementById('admin-panel');
     if (gameData.admin === currentUser) {
         ap.classList.remove('hidden');
@@ -936,7 +770,6 @@ function renderGame() {
     } else ap.classList.add('hidden');
 }
 
-// ===== SETTLERS =====
 function changeSettler(key, delta) {
     const me = gameData.players[currentUser];
     const pop = me.population || 5;
@@ -948,68 +781,55 @@ function changeSettler(key, delta) {
     renderGame();
 }
 
-// ===== CHOICES =====
 function renderChoices(me, turn) {
     const sciS = document.getElementById('science-choices');
     const socS = document.getElementById('social-choices');
     const dipS = document.getElementById('diplo-choices');
-
     if (!me.llmResponse || me.turnDone) {
         sciS.classList.add('hidden'); socS.classList.add('hidden'); dipS.classList.add('hidden');
         if (me.turnDone) { selectedScience=null; selectedSocial=null; selectedDiplo=null; }
         return;
     }
-
     const resp = me.llmResponse;
     const slots = getChoiceSlots(me);
 
-    function renderSection(section, elId, optElId, slotsId, items, selectedIdx, type) {
-        if (items && items.length > 0) {
-            section.classList.remove('hidden');
-            document.getElementById(slotsId).textContent = `(${items.length} вариантов)`;
-            document.getElementById(optElId).innerHTML = items.slice(0, slots).map((opt, i) => {
-                let effectsHtml = '';
-                if (opt.effects) {
-                    effectsHtml = '<div class="choice-effects">' +
-                        Object.entries(opt.effects).map(([k,v]) => {
-                            const num = parseFloat(v);
-                            const cls = num > 0 ? 'positive' : (num < 0 ? 'negative' : 'neutral');
-                            const label = getEffectLabel(k);
-                            const sign = num > 0 ? '+' : '';
-                            return `<span class="effect-tag ${cls}">${label} ${sign}${v}</span>`;
+    function renderSec(sec, optId, slotId, items, sel, type) {
+        if (items?.length > 0) {
+            sec.classList.remove('hidden');
+            const shown = items.slice(0, slots);
+            document.getElementById(slotId).textContent = `(${shown.length} вариантов)`;
+            document.getElementById(optId).innerHTML = shown.map((o, i) => {
+                let eff = '';
+                if (o.effects) {
+                    eff = '<div class="choice-effects">' +
+                        Object.entries(o.effects).map(([k,v]) => {
+                            const n = parseFloat(v);
+                            if (!n) return '';
+                            return `<span class="effect-tag ${n>0?'positive':'negative'}">${getEL(k)} ${n>0?'+':''}${v}</span>`;
                         }).join('') + '</div>';
                 }
-                return `<div class="choice-option ${selectedIdx===i?'selected':''}" onclick="selectChoice('${type}',${i})">
-                    <div class="choice-title">${opt.title}</div>
-                    <div class="choice-desc">${opt.description}</div>
-                    ${effectsHtml}
-                </div>`;
+                return `<div class="choice-option ${sel===i?'selected':''}" onclick="selectChoice('${type}',${i})">
+                    <div class="choice-title">${o.title}</div>
+                    <div class="choice-desc">${o.description}</div>${eff}</div>`;
             }).join('');
-        } else section.classList.add('hidden');
+        } else sec.classList.add('hidden');
     }
-
-    renderSection(sciS, 'science-options', 'science-options', 'science-slots', resp.science, selectedScience, 'science');
-    renderSection(socS, 'social-options', 'social-options', 'social-slots', resp.social, selectedSocial, 'social');
-
-    if (turn >= 5 && resp.diplomacy?.length > 0) {
-        renderSection(dipS, 'diplo-options', 'diplo-options', 'diplo-slots', resp.diplomacy, selectedDiplo, 'diplo');
-    } else dipS.classList.add('hidden');
+    renderSec(sciS, 'science-options', 'science-slots', resp.science, selectedScience, 'science');
+    renderSec(socS, 'social-options', 'social-slots', resp.social, selectedSocial, 'social');
+    if (turn >= 5 && resp.diplomacy?.length > 0) renderSec(dipS, 'diplo-options', 'diplo-slots', resp.diplomacy, selectedDiplo, 'diplo');
+    else dipS.classList.add('hidden');
 }
 
-function getEffectLabel(key) {
-    const map = {
-        food:'🍖Еда', materials:'🪨Матер.', knowledge:'🔬Знания', spirit:'🌙Дух.',
-        mult_food:'🍖×', mult_materials:'🪨×', mult_knowledge:'🔬×', mult_spirit:'🌙×',
-        health:'❤️Здор.', happiness:'😊Счастье', safety:'🛡️Безоп.', cohesion:'🤝Сплоч.',
-        population:'👥Люди'
-    };
-    return map[key] || key;
+function getEL(k) {
+    return { food:'🍖',materials:'🪨',knowledge:'🔬',spirit:'🌙',
+        mult_food:'🍖×',mult_materials:'🪨×',mult_knowledge:'🔬×',mult_spirit:'🌙×',
+        health:'❤️',happiness:'😊',safety:'🛡️',cohesion:'🤝',population:'👥' }[k]||k;
 }
 
-function selectChoice(type, i) {
-    if (type==='science') selectedScience=i;
-    if (type==='social') selectedSocial=i;
-    if (type==='diplo') selectedDiplo=i;
+function selectChoice(t, i) {
+    if (t==='science') selectedScience=i;
+    if (t==='social') selectedSocial=i;
+    if (t==='diplo') selectedDiplo=i;
     const me = gameData.players[currentUser];
     renderChoices(me, gameData.turn||1);
     updateEndTurnButton(me, gameData.turn||1);
@@ -1022,20 +842,18 @@ function updateEndTurnButton(me, turn) {
     const needD = turn>=5 && me.llmResponse.diplomacy?.length>0;
     const pop = me.population||5;
     const totalS = Object.values(localSettlers).reduce((a,b)=>a+b,0);
-    const allSel = selectedScience!==null && selectedSocial!==null && (!needD || selectedDiplo!==null);
-    const allAssigned = totalS === pop;
-    if (!allSel || !allAssigned) {
+    const ok = selectedScience!==null && selectedSocial!==null && (!needD||selectedDiplo!==null) && totalS===pop;
+    if (!ok) {
         btn.disabled=true;
         const m=[];
-        if (!allAssigned) m.push(`распредели поселенцев (${totalS}/${pop})`);
-        if (selectedScience===null) m.push('изыскание');
-        if (selectedSocial===null) m.push('уклад');
-        if (needD && selectedDiplo===null) m.push('дипломатию');
-        btn.textContent = m.join(', ');
+        if (totalS!==pop) m.push(`👥${totalS}/${pop}`);
+        if (selectedScience===null) m.push('🔬');
+        if (selectedSocial===null) m.push('👥уклад');
+        if (needD && selectedDiplo===null) m.push('🤝');
+        btn.textContent = `Выбери: ${m.join(' ')}`;
     } else { btn.disabled=false; btn.textContent='⚔️ ЗАВЕРШИТЬ ХОД'; }
 }
 
-// ===== LLM =====
 async function requestLLM() {
     const apiKey = getApiKey();
     if (!apiKey) { await db.ref('game/players/'+currentUser+'/llmError').set('Нужен API ключ!'); return; }
@@ -1049,74 +867,60 @@ async function requestLLM() {
     const pls = Object.keys(gameData.players);
     const t = me.tribe;
     const slots = getChoiceSlots(me);
+    const foodCost = getFoodCost(me);
 
-    let prompt = `Ты генератор контента для пошаговой стратегии типа Civilization. Племя в каменном веке.
+    let prompt = `Ты генератор контента для пошаговой стратегии каменного века (Civilization-подобная).
 
-СТАРТОВЫЕ ПЕРКИ:
+ПЛЕМЯ:
 - Биом: ${t.biome} (${t.biomeDesc})
 - География: ${t.geography} (${t.geographyDesc})
 - Черта: ${t.trait} (${t.traitDesc})
 - Рядом: ${t.nearby} (${t.nearbyDesc})
 
-ТЕКУЩИЕ РЕСУРСЫ:
-- Еда: ${me.food||0} (множитель ×${(me.mult_food||1).toFixed(2)})
-- Материалы: ${me.materials||0} (×${(me.mult_materials||1).toFixed(2)})
-- Знания: ${me.knowledge||0} (×${(me.mult_knowledge||1).toFixed(2)})
-- Духовность: ${me.spirit||0} (×${(me.mult_spirit||1).toFixed(2)})
+РЕСУРСЫ: 🍖Еда=${me.food||0}(×${(me.mult_food||1).toFixed(2)}, расход ${foodCost}/ход) 🪨Матер.=${me.materials||0}(×${(me.mult_materials||1).toFixed(2)}) 🔬Знания=${me.knowledge||0}(×${(me.mult_knowledge||1).toFixed(2)}) 🌙Дух.=${me.spirit||0}(×${(me.mult_spirit||1).toFixed(2)})
+ПАРАМЕТРЫ: ❤️${me.health||0} 😊${me.happiness||0} 🛡️${me.safety||0} 🤝${me.cohesion||0} (все из 100)
+👥 Население: ${me.population||5}
+ХОД: ${turn}
 
-ПАРАМЕТРЫ ПЛЕМЕНИ:
-- Здоровье: ${me.health||0}/100
-- Счастье: ${me.happiness||0}/100
-- Безопасность: ${me.safety||0}/100
-- Сплочённость: ${me.cohesion||0}/100
-- Население: ${me.population||5}
-- Потребление еды: ${me.population||5}/ход
-
-ХОД: ${turn} (1 ход ≈ 1 поколение)
-
-СОСТОЯНИЕ:
-${me.summary}`;
+СОСТОЯНИЕ: ${me.summary}`;
 
     if (me.history?.length > 0) {
-        const last = me.history.slice(-5);
         prompt += `\n\nПОСЛЕДНИЕ РЕШЕНИЯ:`;
-        last.forEach(h => {
+        me.history.slice(-5).forEach(h => {
             prompt += `\nХод ${h.turn}: 🔬"${h.science}" 👥"${h.social}"`;
             if (h.diplomacy) prompt += ` 🤝"${h.diplomacy}"`;
         });
     }
 
-    let hasNeighbor = false;
+    let hasN = false;
     if (turn >= 5) {
         const nb = getNeighbor(currentUser, pls);
         if (nb && gameData.players[nb]) {
-            hasNeighbor = true;
+            hasN = true;
             const np = gameData.players[nb];
-            prompt += `\n\nСОСЕД "${nb}": ${np.summary||'Неизвестен'}
-Ресурсы соседа: Еда=${np.food||0}, Мат.=${np.materials||0}, Знания=${np.knowledge||0}, Дух.=${np.spirit||0}`;
+            prompt += `\n\nСОСЕД "${nb}": ${np.summary||'?'}
+🍖${np.food||0} 🪨${np.materials||0} 🔬${np.knowledge||0} 🌙${np.spirit||0} 👥${np.population||5}`;
         }
     }
 
-    prompt += `\n\nСГЕНЕРИРУЙ:
-1. "narrative" — атмосферный текст 2-3 предложения о жизни племени в эту эпоху
-2. "event" — случайное событие (засуха, находка, болезнь, рождение близнецов...). Короткое описание. Может быть null если ничего особенного
-3. "science" — ровно ${slots} вариантов изыскательского интереса. Каждый с числовыми эффектами.
-4. "social" — ровно ${slots} вариантов социального уклада/действия. Каждый с числовыми эффектами.
-${hasNeighbor ? `5. "diplomacy" — ровно ${slots} вариантов дипломатии с соседом. Каждый с числовыми эффектами.` : ''}
-6. "summary" — обновлённое описание племени (4-5 предложений) с учётом всего
+    prompt += `\n\nСГЕНЕРИРУЙ ровно ${slots} вариантов в каждой категории.
 
-Эффекты effects — объект с ключами: food, materials, knowledge, spirit (изменение ресурсов), mult_food, mult_materials, mult_knowledge, mult_spirit (изменение множителей, например +0.1), health, happiness, safety, cohesion (изменение параметров), population (изменение числа людей, обычно 0, но может быть +1 или -1).
+БАЛАНС ЭФФЕКТОВ (ОБЯЗАТЕЛЬНО СОБЛЮДАЙ!):
+- Множители (mult_food/materials/knowledge/spirit): от +0.15 до +0.5. Штрафы от -0.1 до -0.2
+- Ресурсы (food/materials/knowledge/spirit): бонусы +2..+8, штрафы -1..-4
+- Параметры (health/happiness/safety/cohesion): бонусы +5..+15, штрафы -3..-8
+- population: обычно 0, изредка +1
+- У сильных бонусов ДОЛЖНЫ быть штрафы (trade-off)
+- Варианты должны быть РАЗНООБРАЗНЫ и логичны для биома/истории
+- НЕ повторяй варианты из прошлых ходов
 
-Эффекты должны быть СБАЛАНСИРОВАНЫ: сильные бонусы имеют штрафы. Не все ключи обязательны — только релевантные.
-
-СТРОГО JSON, без markdown, без пояснений:
+JSON без markdown, без текста вокруг:
 {
-  "narrative": "...",
-  "event": "..." или null,
-  "summary": "...",
-  "science": [{"title":"...","description":"...","effects":{"knowledge":2,"mult_knowledge":0.1}}, ...],
-  "social": [{"title":"...","description":"...","effects":{"happiness":5,"cohesion":3}}, ...]${hasNeighbor?`,
-  "diplomacy": [{"title":"...","description":"...","effects":{"safety":5,"materials":-2}}, ...]`:''}
+  "narrative": "2-3 атмосферных предложения",
+  "summary": "Обновлённое описание 4-5 предложений",
+  "science": [{"title":"...","description":"...","effects":{"knowledge":3,"mult_knowledge":0.2}},${slots>1?' ...':''}],
+  "social": [{"title":"...","description":"...","effects":{"happiness":8}},${slots>1?' ...':''}]${hasN?`,
+  "diplomacy": [{"title":"...","description":"...","effects":{"safety":10,"materials":-3}},${slots>1?' ...':''}]`:''}
 }`;
 
     try {
@@ -1126,27 +930,23 @@ ${hasNeighbor ? `5. "diplomacy" — ровно ${slots} вариантов ди�
             body: JSON.stringify({
                 model:'hydra-gpt-mini',
                 messages:[
-                    { role:'system', content:'Отвечай ТОЛЬКО валидным JSON на русском. Без markdown, без текста вне JSON.' },
+                    { role:'system', content:'Отвечай ТОЛЬКО валидным JSON на русском. Без markdown. Без ```.' },
                     { role:'user', content: prompt }
                 ],
-                max_tokens: 2000,
-                temperature: 0.85,
-                top_p: 0.9,
-                stream: false
+                max_tokens: 2500, temperature: 0.85, top_p: 0.9, stream: false
             })
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-        let content = data.choices[0].message.content;
-        const jm = content.match(/\{[\s\S]*\}/);
-        if (!jm) throw new Error('Нет JSON в ответе');
-        const parsed = JSON.parse(jm[0]);
-        if (!parsed.science || !parsed.social || !parsed.narrative || !parsed.summary) throw new Error('Неполный ответ');
-
-        await db.ref('game/players/'+currentUser).update({ llmResponse: parsed, llmLoading:false, llmError:null });
+        let c = data.choices[0].message.content;
+        const jm = c.match(/\{[\s\S]*\}/);
+        if (!jm) throw new Error('Нет JSON');
+        const p = JSON.parse(jm[0]);
+        if (!p.science || !p.social || !p.narrative || !p.summary) throw new Error('Неполный ответ');
+        await db.ref('game/players/'+currentUser).update({ llmResponse:p, llmLoading:false, llmError:null });
     } catch(err) {
-        console.error('LLM fail:', err);
+        console.error('LLM:', err);
         await db.ref('game/players/'+currentUser).update({ llmLoading:false, llmError:err.message });
     }
     llmRequestInProgress = false;
@@ -1159,15 +959,14 @@ async function regenerateLLM() {
     requestLLM();
 }
 
-// ===== END TURN =====
 function showConfirmModal() {
     const me = gameData.players[currentUser];
     if (!me.llmResponse) return;
     const sci = me.llmResponse.science[selectedScience]?.title||'?';
     const soc = me.llmResponse.social[selectedSocial]?.title||'?';
-    let txt = `🔬 ${sci}\n👥 ${soc}\n\n👥 Поселенцы: `;
-    RESOURCE_DEFS.forEach(r => { txt += `${r.icon}${localSettlers[r.key]||0} `; });
-    if (selectedDiplo!==null && me.llmResponse.diplomacy) txt += `\n🤝 ${me.llmResponse.diplomacy[selectedDiplo]?.title||'?'}`;
+    let txt = `🔬 ${sci}\n👥 ${soc}\n\nПоселенцы: `;
+    RESOURCE_DEFS.forEach(r => txt += `${r.icon}${localSettlers[r.key]||0} `);
+    if (selectedDiplo!==null && me.llmResponse.diplomacy) txt += `\n🤝 ${me.llmResponse.diplomacy[selectedDiplo]?.title}`;
     document.getElementById('confirm-summary').textContent = txt;
     document.getElementById('confirm-modal').classList.add('active');
 }
@@ -1177,184 +976,141 @@ async function endTurn() {
     const me = gameData.players[currentUser];
     const turn = gameData.turn||1;
     const resp = me.llmResponse;
+    const sci = resp.science[selectedScience];
+    const soc = resp.social[selectedSocial];
+    let dip = null;
+    if (selectedDiplo!==null && resp.diplomacy) dip = resp.diplomacy[selectedDiplo];
 
-    const sciChoice = resp.science[selectedScience];
-    const socChoice = resp.social[selectedSocial];
-    let dipChoice = null;
-    if (selectedDiplo!==null && resp.diplomacy) dipChoice = resp.diplomacy[selectedDiplo];
+    let nF=me.food||0, nM=me.materials||0, nK=me.knowledge||0, nS=me.spirit||0;
+    let mF=me.mult_food||1, mM=me.mult_materials||1, mK=me.mult_knowledge||1, mS=me.mult_spirit||1;
+    let nH=me.health||75, nHa=me.happiness||65, nSa=me.safety||50, nC=me.cohesion||55;
+    let nP=me.population||5;
 
-    // Calculate resource gains from settlers
-    const updates = {};
-    let newFood = (me.food||0);
-    let newMat = (me.materials||0);
-    let newKnow = (me.knowledge||0);
-    let newSpirit = (me.spirit||0);
-    let newMultF = me.mult_food||1;
-    let newMultM = me.mult_materials||1;
-    let newMultK = me.mult_knowledge||1;
-    let newMultS = me.mult_spirit||1;
-    let newHealth = me.health||70;
-    let newHappy = me.happiness||60;
-    let newSafety = me.safety||40;
-    let newCohesion = me.cohesion||50;
-    let newPop = me.population||5;
+    // Production
+    nF += (localSettlers.food||0) * mF;
+    nM += (localSettlers.materials||0) * mM;
+    nK += (localSettlers.knowledge||0) * mK;
+    nS += (localSettlers.spirit||0) * mS;
 
-    // Settler production
-    newFood += (localSettlers.food||0) * newMultF;
-    newMat += (localSettlers.materials||0) * newMultM;
-    newKnow += (localSettlers.knowledge||0) * newMultK;
-    newSpirit += (localSettlers.spirit||0) * newMultS;
+    // Food cost
+    nF -= nP * FOOD_PER_POP;
 
-    // Food consumption
-    newFood -= newPop;
-
-    // Apply choice effects
-    function applyEffects(eff) {
-        if (!eff) return;
-        if (eff.food) newFood += parseFloat(eff.food);
-        if (eff.materials) newMat += parseFloat(eff.materials);
-        if (eff.knowledge) newKnow += parseFloat(eff.knowledge);
-        if (eff.spirit) newSpirit += parseFloat(eff.spirit);
-        if (eff.mult_food) newMultF += parseFloat(eff.mult_food);
-        if (eff.mult_materials) newMultM += parseFloat(eff.mult_materials);
-        if (eff.mult_knowledge) newMultK += parseFloat(eff.mult_knowledge);
-        if (eff.mult_spirit) newMultS += parseFloat(eff.mult_spirit);
-        if (eff.health) newHealth += parseFloat(eff.health);
-        if (eff.happiness) newHappy += parseFloat(eff.happiness);
-        if (eff.safety) newSafety += parseFloat(eff.safety);
-        if (eff.cohesion) newCohesion += parseFloat(eff.cohesion);
-        if (eff.population) newPop += parseInt(eff.population);
+    // Apply effects
+    function ae(e) {
+        if (!e) return;
+        nF += parseFloat(e.food)||0;
+        nM += parseFloat(e.materials)||0;
+        nK += parseFloat(e.knowledge)||0;
+        nS += parseFloat(e.spirit)||0;
+        mF += parseFloat(e.mult_food)||0;
+        mM += parseFloat(e.mult_materials)||0;
+        mK += parseFloat(e.mult_knowledge)||0;
+        mS += parseFloat(e.mult_spirit)||0;
+        nH += parseFloat(e.health)||0;
+        nHa += parseFloat(e.happiness)||0;
+        nSa += parseFloat(e.safety)||0;
+        nC += parseFloat(e.cohesion)||0;
+        nP += parseInt(e.population)||0;
     }
+    ae(sci.effects); ae(soc.effects); if(dip) ae(dip.effects);
 
-    applyEffects(sciChoice.effects);
-    applyEffects(socChoice.effects);
-    if (dipChoice) applyEffects(dipChoice.effects);
+    // Starvation
+    if (nF < 0) { nH -= 10; nHa -= 8; if (nH < 20 && nP > 2) { nP--; nF = 0; } }
 
-    // Starvation penalty
-    if (newFood < 0) {
-        newHealth -= 15;
-        newHappy -= 10;
-        newCohesion -= 5;
-        // Potential pop loss
-        if (newHealth < 20 && newPop > 2) {
-            newPop -= 1;
-            newFood = 0; // reset to 0, they ate... something
+    // Decay
+    nHa = Math.max(0, nHa - 1);
+    nSa = Math.max(0, nSa - 1);
+
+    // Growth
+    if (nF > 8 && nH > 60 && nHa > 50 && Math.random() < 0.25) nP++;
+
+    // Clamp
+    nF=Math.max(0,Math.round(nF*10)/10);
+    nM=Math.max(0,Math.round(nM*10)/10);
+    nK=Math.max(0,Math.round(nK*10)/10);
+    nS=Math.max(0,Math.round(nS*10)/10);
+    mF=Math.max(0.5,Math.round(mF*100)/100);
+    mM=Math.max(0.5,Math.round(mM*100)/100);
+    mK=Math.max(0.5,Math.round(mK*100)/100);
+    mS=Math.max(0.5,Math.round(mS*100)/100);
+    nH=Math.max(0,Math.min(100,Math.round(nH)));
+    nHa=Math.max(0,Math.min(100,Math.round(nHa)));
+    nSa=Math.max(0,Math.min(100,Math.round(nSa)));
+    nC=Math.max(0,Math.min(100,Math.round(nC)));
+    nP=Math.max(2,nP);
+
+    // Fix settlers if pop dropped
+    let ts = Object.values(localSettlers).reduce((a,b)=>a+b,0);
+    if (ts > nP) {
+        let ex = ts - nP;
+        for (const k of ['spirit','knowledge','materials','food']) {
+            while (ex>0 && localSettlers[k]>0) { localSettlers[k]--; ex--; }
         }
     }
 
-    // Natural decay / drift
-    newHappy = Math.max(0, newHappy - 2); // slight decay
-    newSafety = Math.max(0, newSafety - 1);
-
-    // Population growth (if well fed and happy)
-    if (newFood > newPop * 2 && newHealth > 60 && newHappy > 50 && Math.random() < 0.3) {
-        newPop += 1;
-    }
-
-    // Clamp values
-    newFood = Math.max(0, Math.round(newFood*10)/10);
-    newMat = Math.max(0, Math.round(newMat*10)/10);
-    newKnow = Math.max(0, Math.round(newKnow*10)/10);
-    newSpirit = Math.max(0, Math.round(newSpirit*10)/10);
-    newMultF = Math.max(0.5, Math.round(newMultF*100)/100);
-    newMultM = Math.max(0.5, Math.round(newMultM*100)/100);
-    newMultK = Math.max(0.5, Math.round(newMultK*100)/100);
-    newMultS = Math.max(0.5, Math.round(newMultS*100)/100);
-    newHealth = Math.max(0, Math.min(100, Math.round(newHealth)));
-    newHappy = Math.max(0, Math.min(100, Math.round(newHappy)));
-    newSafety = Math.max(0, Math.min(100, Math.round(newSafety)));
-    newCohesion = Math.max(0, Math.min(100, Math.round(newCohesion)));
-    newPop = Math.max(2, newPop);
-
-    const histEntry = {
-        turn, science: sciChoice.title, social: socChoice.title,
-        diplomacy: dipChoice ? dipChoice.title : null
-    };
-    const hist = me.history || [];
-    hist.push(histEntry);
-
-    const newSummary = resp.summary || me.summary;
+    const he = { turn, science:sci.title, social:soc.title, diplomacy:dip?dip.title:null };
+    const hist = me.history||[]; hist.push(he);
 
     await db.ref('game/players/'+currentUser).update({
-        turnDone: true,
-        turnChoices: histEntry,
-        summary: newSummary,
-        history: hist,
-        settlers: {...localSettlers},
-        food: newFood, materials: newMat, knowledge: newKnow, spirit: newSpirit,
-        mult_food: newMultF, mult_materials: newMultM, mult_knowledge: newMultK, mult_spirit: newMultS,
-        health: newHealth, happiness: newHappy, safety: newSafety, cohesion: newCohesion,
-        population: newPop
+        turnDone:true, turnChoices:he, summary:resp.summary||me.summary, history:hist,
+        settlers:{...localSettlers},
+        food:nF, materials:nM, knowledge:nK, spirit:nS,
+        mult_food:mF, mult_materials:mM, mult_knowledge:mK, mult_spirit:mS,
+        health:nH, happiness:nHa, safety:nSa, cohesion:nC, population:nP
     });
 
     selectedScience=null; selectedSocial=null; selectedDiplo=null;
 
     const snap = await db.ref('game/players').once('value');
-    const players = snap.val();
-    if (Object.keys(players).every(n => players[n].turnDone)) await processTurnEnd(players);
+    const all = snap.val();
+    if (Object.keys(all).every(n => all[n].turnDone)) await processTurnEnd(all);
 }
 
 async function processTurnEnd(players) {
-    const updates = {};
+    const u = {};
     const next = (gameData.turn||1) + 1;
     Object.keys(players).forEach(n => {
-        updates['game/players/'+n+'/turnDone'] = false;
-        updates['game/players/'+n+'/llmResponse'] = null;
-        updates['game/players/'+n+'/llmLoading'] = false;
-        updates['game/players/'+n+'/llmError'] = null;
-        updates['game/players/'+n+'/turnChoices'] = null;
+        u['game/players/'+n+'/turnDone'] = false;
+        u['game/players/'+n+'/llmResponse'] = null;
+        u['game/players/'+n+'/llmLoading'] = false;
+        u['game/players/'+n+'/llmError'] = null;
+        u['game/players/'+n+'/turnChoices'] = null;
     });
-    updates['game/turn'] = next;
-    await db.ref().update(updates);
+    u['game/turn'] = next;
+    await db.ref().update(u);
 }
 
-// ===== NEIGHBOR =====
 function getNeighbor(name, all) {
-    const s = [...all].sort();
-    const i = s.indexOf(name);
-    const ni = (i+1) % s.length;
+    const s=[...all].sort(); const i=s.indexOf(name); const ni=(i+1)%s.length;
     return s[ni]!==name ? s[ni] : null;
 }
 
-// ===== SCOREBOARD =====
 function renderScoreboard(pls) {
-    const tb = document.getElementById('scoreboard-body');
     let h='';
     pls.forEach(n => {
         const p = gameData.players[n];
         const isMe = n===currentUser;
-        const isA = gameData.admin===n;
-        let st = '⬜';
+        let st='⬜';
         if (p.turnDone) st='✅'; else if (p.llmLoading) st='⏳'; else if (p.llmResponse) st='🟢'; else if (p.llmError) st='❌';
-        h += `<tr>
-            <td class="${isMe?'me':''}">${isA?'👑':''}${n}</td>
-            <td>${p.population||5}</td>
-            <td>${Math.floor(p.food||0)}</td>
-            <td>${Math.floor(p.materials||0)}</td>
-            <td>${Math.floor(p.knowledge||0)}</td>
-            <td>${Math.floor(p.spirit||0)}</td>
-            <td>${st}</td>
-        </tr>`;
+        h += `<tr><td class="${isMe?'me':''}">${n}</td><td>${p.population||5}</td>
+            <td>${Math.floor(p.food||0)}</td><td>${Math.floor(p.materials||0)}</td>
+            <td>${Math.floor(p.knowledge||0)}</td><td>${Math.floor(p.spirit||0)}</td><td>${st}</td></tr>`;
     });
-    tb.innerHTML = h;
+    document.getElementById('scoreboard-body').innerHTML = h;
 }
 
-// ===== HISTORY =====
 function toggleHistory() {
     historyVisible = !historyVisible;
     const el = document.getElementById('history-list');
     if (historyVisible) {
         el.classList.remove('hidden');
-        const me = gameData.players[currentUser];
-        const hist = me.history || [];
-        if (hist.length === 0) { el.innerHTML = '<em>Нет истории</em>'; return; }
-        el.innerHTML = hist.map(h =>
-            `<div class="h-entry">Ход ${h.turn}: 🔬${h.science} | 👥${h.social}${h.diplomacy ? ' | 🤝'+h.diplomacy : ''}</div>`
-        ).join('');
+        const hist = gameData.players[currentUser]?.history || [];
+        el.innerHTML = hist.length ? hist.map(h =>
+            `<div class="h-entry">Ход ${h.turn}: 🔬${h.science} | 👥${h.social}${h.diplomacy?' | 🤝'+h.diplomacy:''}</div>`
+        ).join('') : '<em>Пусто</em>';
     } else el.classList.add('hidden');
 }
 
-// ===== ADMIN =====
 function showKickConfirm(n) { kickTarget=n; document.getElementById('kick-name').textContent=n; document.getElementById('kick-modal').classList.add('active'); }
 function confirmKick() { hideModals(); if(kickTarget) resetGameData(); }
 function showResetConfirm() { document.getElementById('reset-modal').classList.add('active'); }
@@ -1368,9 +1124,8 @@ function resetGameData() {
     });
 }
 
-// ===== MODALS =====
 function hideModals() { document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('active')); }
-document.querySelectorAll('.modal-overlay').forEach(o => { o.addEventListener('click', e=>{ if(e.target===o) hideModals(); }); });
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e=>{ if(e.target===o) hideModals(); }));
 </script>
 </body>
 </html>
