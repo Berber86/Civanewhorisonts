@@ -1669,318 +1669,7 @@ function getBuildingBonuses(me) {
 // ============================================
 // ЗАПРОС К LLM (OPENROUTER)
 // ============================================
-async function requestLLM() {
-    const apiKey = getApiKey();
 
-    if (!apiKey) {
-        await db.ref('game/players/' + currentUser + '/llmError').set('Нужен API ключ OpenRouter! Вставь его вверху страницы.');
-        return;
-    }
-
-    if (llmRequestInProgress) return;
-    llmRequestInProgress = true;
-
-    const me = gameData.players[currentUser];
-
-    if (!me || !me.tribe) {
-        llmRequestInProgress = false;
-        return;
-    }
-
-    // Отмечаем что загрузка началась
-    await db.ref('game/players/' + currentUser).update({
-        llmLoading: true,
-        llmError: null
-    });
-
-    const turn = gameData.turn || 1;
-    const playerNames = Object.keys(gameData.players);
-    const tribe = me.tribe;
-    const slots = getChoiceSlots(me);
-    const foodConsumption = getFoodConsumption(me);
-    const buildingBonuses = getBuildingBonuses(me);
-    const mods = getPlayerModifiers(me);
-
-    // Списки построек и чертежей
-    const builtNames = (me.buildings || []).map(b => b.name);
-    const blueprintNames = (me.blueprints || []).map(b => b.name);
-
-    // Средние ресурсы всех игроков для подсказки цены
-    let avgMaterials = 0;
-    playerNames.forEach(name => {
-        avgMaterials += (gameData.players[name].materials || 0);
-    });
-    avgMaterials = Math.round(avgMaterials / playerNames.length);
-
-    // === ФОРМИРУЕМ ПРОМПТ ===
-    let prompt = `Ты — генератор контента для пошаговой стратегии каменного века, подобной Civilization.
-
-СТАРТОВЫЕ ХАРАКТЕРИСТИКИ ПЛЕМЕНИ:
-- Биом: ${tribe.biome} (${tribe.biomeDesc})
-- География: ${tribe.geography} (${tribe.geographyDesc})
-- Черта племени: ${tribe.trait} (${tribe.traitDesc})
-- Поблизости: ${tribe.nearby} (${tribe.nearbyDesc})
-
-ТЕКУЩИЕ РЕСУРСЫ:
-- 🍖 Еда: ${me.food || 0} (множитель ×${((me.mult_food || 1) + buildingBonuses.mult_food).toFixed(2)}, потребление: ${foodConsumption}/ход)
-- 🪨 Материалы: ${me.materials || 0} (×${((me.mult_materials || 1) + buildingBonuses.mult_materials).toFixed(2)})
-- 🔬 Знания: ${me.knowledge || 0} (×${((me.mult_knowledge || 1) + buildingBonuses.mult_knowledge).toFixed(2)})
-- 🌙 Духовность: ${me.spirit || 0} (×${((me.mult_spirit || 1) + buildingBonuses.mult_spirit).toFixed(2)})
-
-ПАРАМЕТРЫ ПЛЕМЕНИ:
-- ❤️ Здоровье: ${me.health || 0}/100
-- 😊 Счастье: ${me.happiness || 0}/100
-- 🛡️ Безопасность: ${me.safety || 0}/100
-- 🤝 Сплочённость: ${me.cohesion || 0}/100
-
-АКТИВНЫЕ МОДИФИКАТОРЫ:
-- Шанс роста населения: ${Math.round((mods.pop_growth_chance || 0.25) * 100)}%
-- Множитель потребления еды: ×${(mods.food_consumption_mult || 1).toFixed(2)}
-- Защита от дипломатии: ${Math.round((mods.diplomacy_defense || 0) * 100)}%
-- Сила дипломатии: +${Math.round((mods.diplomacy_power || 0) * 100)}%
-- Стоимость строительства: ×${(mods.build_cost_mult || 1).toFixed(2)}
-
-👥 Население: ${me.population || 5} (макс: ${mods.max_population || 20})
-📅 Текущий ход: ${turn} (каждый ход ≈ одно поколение)
-🏗️ Построено: ${builtNames.length > 0 ? builtNames.join(', ') : 'ничего'}
-📐 Известные чертежи: ${blueprintNames.length > 0 ? blueprintNames.join(', ') : 'нет'}
-
-💰 Средние 🪨 материалы у всех игроков: ${avgMaterials}
-
-ТЕКУЩЕЕ СОСТОЯНИЕ ПЛЕМЕНИ:
-${me.summary || 'Племя только начинает свой путь в каменном веке.'}`;
-
-    // Входящие дипломатические действия
-    const pendingDiplo = me.pendingDiplo || [];
-    if (pendingDiplo.length > 0) {
-        prompt += `\n\nДЕЙСТВИЯ СОСЕДЕЙ В ПРОШЛОМ ХОДУ:`;
-        pendingDiplo.forEach(diplo => {
-            prompt += `\n- Племя "${diplo.from}" совершило действие: "${diplo.action}"`;
-        });
-    }
-
-    // История решений
-    if (me.history && me.history.length > 0) {
-        const recentHistory = me.history.slice(-5);
-        prompt += `\n\nПОСЛЕДНИЕ РЕШЕНИЯ ПЛЕМЕНИ:`;
-        recentHistory.forEach(entry => {
-            prompt += `\nХод ${entry.turn}: Изыскание: "${entry.science}", Уклад: "${entry.social}"`;
-            if (entry.diplomacy) prompt += `, Дипломатия: "${entry.diplomacy}"`;
-            if (entry.built) prompt += `, Построено: "${entry.built}"`;
-        });
-    }
-
-    // Информация о соседе
-    let hasNeighbor = false;
-    if (turn >= 5) {
-        const neighborName = getNeighbor(currentUser, playerNames);
-
-        if (neighborName && gameData.players[neighborName]) {
-            hasNeighbor = true;
-            const neighbor = gameData.players[neighborName];
-            const neighborMods = getPlayerModifiers(neighbor);
-
-            prompt += `\n\nСОСЕДНЕЕ ПЛЕМЯ "${neighborName}":
-${neighbor.summary || 'О нём мало что известно.'}
-Ресурсы соседа: 🍖${neighbor.food || 0} 🪨${neighbor.materials || 0} 🔬${neighbor.knowledge || 0} 🌙${neighbor.spirit || 0} 👥${neighbor.population || 5}
-Постройки соседа: ${(neighbor.buildings || []).map(b => b.name).join(', ') || 'нет'}
-Защита соседа: ${Math.round((neighborMods.diplomacy_defense || 0) * 100)}%, множитель защиты: ×${(neighborMods.defense_mult || 1).toFixed(2)}`;
-        }
-    }
-
-    // === ИНСТРУКЦИИ ПО ГЕНЕРАЦИИ ===
-    prompt += `\n\nТВОЯ ЗАДАЧА — сгенерировать ровно ${slots} вариантов в каждой категории.
-
-=== БАЗОВЫЕ ЭФФЕКТЫ ===
-- Ресурсы (food, materials, knowledge, spirit): +2..+8 / -1..-5
-- Множители (mult_food, mult_materials, mult_knowledge, mult_spirit): +0.15..+0.5 / -0.1..-0.25
-- Параметры (health, happiness, safety, cohesion): +5..+15 / -3..-10
-- Население (population): 0, иногда +1, редко -1
-
-=== РАСШИРЕННЫЕ ЭФФЕКТЫ (используй разнообразно!) ===
-
-МОДИФИКАТОРЫ ПОТРЕБЛЕНИЯ:
-- food_consumption_mult: множитель потребления еды (0.8 = племя ест на 20% меньше)
-- food_consumption_flat: фиксированное изменение (+1 = нужно на 1 еду больше)
-
-МОДИФИКАТОРЫ НАСЕЛЕНИЯ:
-- pop_growth_chance: изменение шанса рождаемости (+0.1 = +10% шанс)
-- pop_growth_threshold_food: порог еды для роста (меньше = легче расти)
-- pop_growth_threshold_health: порог здоровья для роста
-- pop_growth_threshold_happiness: порог счастья для роста
-- max_population: максимум населения (+5 = можно иметь на 5 больше)
-
-БОЕВЫЕ И ДИПЛОМАТИЧЕСКИЕ:
-- defense_mult: множитель защиты (1.3 = получаешь на 30% меньше урона)
-- attack_mult: множитель атаки (1.2 = наносишь на 20% больше)
-- diplomacy_defense: защита от дипло-эффектов (0.2 = блокирует 20%)
-- diplomacy_power: усиление своих дипло-эффектов (0.3 = +30% эффект)
-
-ТОРГОВЛЯ:
-- trade_bonus: бонус к получаемому при торговле (+2 ресурса)
-- trade_efficiency: множитель торговли (1.5 = получаешь в 1.5 раза больше)
-
-СТРОИТЕЛЬСТВО:
-- build_cost_mult: множитель стоимости (0.7 = на 30% дешевле)
-- build_discount: скидка (3 = все здания на 3🪨 дешевле)
-
-ВЫЖИВАНИЕ И РЕГЕНЕРАЦИЯ:
-- starvation_resistance: снижение урона от голода (5 = -5 урона)
-- health_regen: регенерация здоровья за ход (+3)
-- happiness_regen: регенерация счастья (+2)
-- safety_regen: регенерация безопасности (+2)
-- happiness_decay: изменение падения счастья (-0.5 = падает на 0.5 медленнее)
-- safety_decay: изменение падения безопасности (0 = не падает)
-
-РАЗВИТИЕ:
-- choice_slots_bonus: доп. варианты выбора (+1)
-- blueprint_chance: шанс доп. чертежа (+0.2 = +20%)
-
-=== ПРИМЕРЫ ИНТЕРЕСНЫХ КОМБИНАЦИЙ ===
-1. Изыскание "Культ плодородия": spirit:+2, pop_growth_chance:+0.15, food_consumption_mult:1.1 (больше детей, но больше едят)
-2. Уклад "Воинские традиции": cohesion:+5, attack_mult:+0.3, diplomacy_power:+0.2, happiness_decay:+0.5 (сильнее, но менее счастливы)
-3. Изыскание "Целебные травы": knowledge:+2, health_regen:+5, starvation_resistance:+3
-4. Уклад "Торговый народ": materials:-2, trade_efficiency:+0.4, trade_bonus:+3, diplomacy_defense:+0.15
-5. Постройка "Сторожевые башни": cost:6, passive_effects:{safety_regen:+3, defense_mult:+0.2, safety_decay:-1}
-
-=== ВАЖНО ===
-- У сильных бонусов ДОЛЖНЫ быть trade-off (штрафы или альтернативные затраты)
-- Создавай УНИКАЛЬНЫЕ эффекты, связанные с контекстом (биом, история, соседи)
-- НЕ все эффекты должны быть про еду и материалы — добавляй модификаторы!
-- Здания должны давать passive_effects с расширенными модификаторами`;
-
-    if (hasNeighbor) {
-        prompt += `
-
-=== ПРАВИЛА ДИПЛОМАТИИ ===
-У каждого дипломатического варианта:
-- "effects" — эффекты НА СЕБЯ
-- "neighbor_effects" — эффекты НА СОСЕДА (учитывают защиту соседа!)
-
-Примеры с расширенными эффектами:
-- Набег: effects:{food:+5, safety:-5}, neighbor_effects:{food:-6, happiness:-10, safety:-8}
-- Торговля: effects:{materials:+4, trade_efficiency:+0.1}, neighbor_effects:{materials:-2, trade_bonus:+1}
-- Угрозы: effects:{diplomacy_power:+0.1}, neighbor_effects:{safety:-12, happiness:-5}
-- Альянс: effects:{defense_mult:+0.15, diplomacy_defense:+0.1}, neighbor_effects:{defense_mult:+0.1}
-- Культурный обмен: effects:{spirit:+3, choice_slots_bonus:+0.5}, neighbor_effects:{spirit:+2, happiness:+5}`;
-    }
-
-    prompt += `
-
-=== ЧЕРТЕЖИ ЗДАНИЙ ===
-- Цена: ${Math.max(3, Math.round(avgMaterials * 0.3))}-${Math.max(10, Math.round(avgMaterials * 0.7))} 🪨
-- passive_effects должны содержать РАСШИРЕННЫЕ модификаторы
-- НЕ дублируй: ${builtNames.concat(blueprintNames).join(', ') || 'нет'}
-
-Примеры зданий с расширенными эффектами:
-- "Храм предков": cost:8, passive_effects:{spirit:+1, pop_growth_chance:+0.05, cohesion:+3}
-- "Оборонительный ров": cost:10, passive_effects:{defense_mult:+0.3, diplomacy_defense:+0.15}
-- "Торговая площадь": cost:7, passive_effects:{trade_efficiency:+0.25, happiness:+2}
-- "Охотничий лагерь": cost:5, passive_effects:{mult_food:+0.2, food_consumption_mult:0.9}
-
-=== ФОРМАТ ОТВЕТА ===
-Ответь СТРОГО в JSON (без markdown, без \`\`\`):
-{
-  "narrative": "Атмосферный текст 2-3 предложения",
-  "summary": "Обновлённое описание 4-5 предложений",
-  "science": [
-    {"title": "Название", "description": "Описание", "effects": {"knowledge": 3, "health_regen": 2, "starvation_resistance": 3}},
-    ...ещё ${slots - 1}
-  ],
-  "social": [
-    {"title": "Название", "description": "Описание", "effects": {"happiness": 8, "pop_growth_chance": 0.1, "food_consumption_mult": 1.05}},
-    ...ещё ${slots - 1}
-  ]${hasNeighbor ? `,
-  "diplomacy": [
-    {"title": "Название", "description": "Описание", "effects": {"safety": 5, "diplomacy_power": 0.1}, "neighbor_effects": {"materials": -4, "safety": -8}},
-    ...ещё ${slots - 1}
-  ]` : ''},
-  "unlocked_buildings": [
-    {"name": "Название", "description": "Описание", "cost": 6, "passive_effects": {"mult_food": 0.15, "health_regen": 2}}
-  ]
-}
-
-unlocked_buildings может быть пустым [] если ничего не открывается.`;
-
-    // === ОТПРАВКА ЗАПРОСА ===
-    try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': window.location.href,
-                'X-Title': 'Tribes Game'
-            },
-            body: JSON.stringify({
-                model: 'deepseek/deepseek-chat-v3-0324:free',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'Ты генератор контента для игры. Отвечай ТОЛЬКО валидным JSON на русском. Никакого markdown. Используй РАЗНООБРАЗНЫЕ расширенные эффекты, не только базовые ресурсы!'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                max_tokens: 3500,
-                temperature: 0.85,
-                top_p: 0.9
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error?.message || `HTTP ошибка: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.error) {
-            throw new Error(data.error.message || JSON.stringify(data.error));
-        }
-
-        // Извлекаем контент
-        let content = data.choices[0].message.content;
-
-        // Пытаемся найти JSON в ответе
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error('LLM не вернул JSON. Попробуй перегенерировать.');
-        }
-
-        const parsed = JSON.parse(jsonMatch[0]);
-
-        // Валидация обязательных полей
-        if (!parsed.science || !parsed.social || !parsed.narrative || !parsed.summary) {
-            throw new Error('Неполный ответ от LLM. Попробуй перегенерировать.');
-        }
-
-        // Добавляем новые чертежи к существующим
-        const existingBlueprints = me.blueprints || [];
-        const existingNames = existingBlueprints.map(b => b.name).concat(builtNames);
-        const newBlueprints = (parsed.unlocked_buildings || []).filter(b => !existingNames.includes(b.name));
-        const allBlueprints = [...existingBlueprints, ...newBlueprints];
-
-        // Сохраняем в базу
-        await db.ref('game/players/' + currentUser).update({
-            llmResponse: parsed,
-            llmLoading: false,
-            llmError: null,
-            blueprints: allBlueprints
-        });
-
-    } catch (error) {
-        console.error('Ошибка LLM:', error);
-        await db.ref('game/players/' + currentUser).update({
-            llmLoading: false,
-            llmError: error.message
-        });
-    }
-
-    llmRequestInProgress = false;
-}
     // ============================================
     // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
     // ============================================
@@ -2951,254 +2640,7 @@ function getEffectLabel(key) {
 // ============================================
 // ЗАПРОС К LLM (OPENROUTER)
 // ============================================
-async function requestLLM() {
-    const apiKey = getApiKey();
 
-    if (!apiKey) {
-        await db.ref('game/players/' + currentUser + '/llmError').set('Нужен API ключ OpenRouter! Вставь его вверху страницы.');
-        return;
-    }
-
-    if (llmRequestInProgress) return;
-    llmRequestInProgress = true;
-
-    const me = gameData.players[currentUser];
-
-    if (!me || !me.tribe) {
-        llmRequestInProgress = false;
-        return;
-    }
-
-    // Отмечаем что загрузка началась
-    await db.ref('game/players/' + currentUser).update({
-        llmLoading: true,
-        llmError: null
-    });
-
-    const turn = gameData.turn || 1;
-    const playerNames = Object.keys(gameData.players);
-    const tribe = me.tribe;
-    const slots = getChoiceSlots(me);
-    const foodConsumption = getFoodConsumption(me);
-    const buildingBonuses = getBuildingBonuses(me);
-
-    // Списки построек и чертежей
-    const builtNames = (me.buildings || []).map(b => b.name);
-    const blueprintNames = (me.blueprints || []).map(b => b.name);
-
-    // Средние ресурсы всех игроков для подсказки цены
-    let avgMaterials = 0;
-    playerNames.forEach(name => {
-        avgMaterials += (gameData.players[name].materials || 0);
-    });
-    avgMaterials = Math.round(avgMaterials / playerNames.length);
-
-    // === ФОРМИРУЕМ ПРОМПТ ===
-    let prompt = `Ты — генератор контента для пошаговой стратегии каменного века, подобной Civilization.
-
-СТАРТОВЫЕ ХАРАКТЕРИСТИКИ ПЛЕМЕНИ:
-- Биом: ${tribe.biome} (${tribe.biomeDesc})
-- География: ${tribe.geography} (${tribe.geographyDesc})
-- Черта племени: ${tribe.trait} (${tribe.traitDesc})
-- Поблизости: ${tribe.nearby} (${tribe.nearbyDesc})
-
-ТЕКУЩИЕ РЕСУРСЫ:
-- 🍖 Еда: ${me.food || 0} (множитель ×${((me.mult_food || 1) + (buildingBonuses.mult_food || 0)).toFixed(2)}, потребление: ${foodConsumption}/ход)
-- 🪨 Материалы: ${me.materials || 0} (×${((me.mult_materials || 1) + (buildingBonuses.mult_materials || 0)).toFixed(2)})
-- 🔬 Знания: ${me.knowledge || 0} (×${((me.mult_knowledge || 1) + (buildingBonuses.mult_knowledge || 0)).toFixed(2)})
-- 🌙 Духовность: ${me.spirit || 0} (×${((me.mult_spirit || 1) + (buildingBonuses.mult_spirit || 0)).toFixed(2)})
-
-ПАРАМЕТРЫ ПЛЕМЕНИ:
-- ❤️ Здоровье: ${me.health || 0}/100
-- 😊 Счастье: ${me.happiness || 0}/100
-- 🛡️ Безопасность: ${me.safety || 0}/100
-- 🤝 Сплочённость: ${me.cohesion || 0}/100
-
-👥 Население: ${me.population || 5}
-📅 Текущий ход: ${turn} (каждый ход ≈ одно поколение)
-🏗️ Построено: ${builtNames.length > 0 ? builtNames.join(', ') : 'ничего'}
-📐 Известные чертежи: ${blueprintNames.length > 0 ? blueprintNames.join(', ') : 'нет'}
-
-💰 Средние 🪨 материалы у всех игроков: ${avgMaterials}
-
-ТЕКУЩЕЕ СОСТОЯНИЕ ПЛЕМЕНИ:
-${me.summary || 'Племя только начинает свой путь в каменном веке.'}`;
-
-    // Входящие дипломатические действия
-    const pendingDiplo = me.pendingDiplo || [];
-    if (pendingDiplo.length > 0) {
-        prompt += `\n\nДЕЙСТВИЯ СОСЕДЕЙ В ПРОШЛОМ ХОДУ:`;
-        pendingDiplo.forEach(diplo => {
-            prompt += `\n- Племя "${diplo.from}" совершило действие: "${diplo.action}"`;
-        });
-    }
-
-    // История решений
-    if (me.history && me.history.length > 0) {
-        const recentHistory = me.history.slice(-5);
-        prompt += `\n\nПОСЛЕДНИЕ РЕШЕНИЯ ПЛЕМЕНИ:`;
-        recentHistory.forEach(entry => {
-            prompt += `\nХод ${entry.turn}: Изыскание: "${entry.science}", Уклад: "${entry.social}"`;
-            if (entry.diplomacy) prompt += `, Дипломатия: "${entry.diplomacy}"`;
-            if (entry.built) prompt += `, Построено: "${entry.built}"`;
-        });
-    }
-
-    // Информация о соседе
-    let hasNeighbor = false;
-    if (turn >= 5) {
-        const neighborName = getNeighbor(currentUser, playerNames);
-
-        if (neighborName && gameData.players[neighborName]) {
-            hasNeighbor = true;
-            const neighbor = gameData.players[neighborName];
-
-            prompt += `\n\nСОСЕДНЕЕ ПЛЕМЯ "${neighborName}":
-${neighbor.summary || 'О нём мало что известно.'}
-Ресурсы соседа: 🍖${neighbor.food || 0} 🪨${neighbor.materials || 0} 🔬${neighbor.knowledge || 0} 🌙${neighbor.spirit || 0} 👥${neighbor.population || 5}
-Постройки соседа: ${(neighbor.buildings || []).map(b => b.name).join(', ') || 'нет'}`;
-        }
-    }
-
-    // Инструкции по генерации
-    prompt += `\n\nТВОЯ ЗАДАЧА — сгенерировать ровно ${slots} вариантов в каждой категории.
-
-ПРАВИЛА ДЛЯ ЭФФЕКТОВ (effects):
-- Множители (mult_food, mult_materials, mult_knowledge, mult_spirit): бонусы от +0.15 до +0.5, штрафы от -0.1 до -0.25
-- Ресурсы (food, materials, knowledge, spirit): бонусы от +2 до +8, штрафы от -1 до -5
-- Параметры (health, happiness, safety, cohesion): бонусы от +5 до +15, штрафы от -3 до -10
-- population: обычно 0, иногда +1, крайне редко -1
-- У сильных бонусов ДОЛЖНЫ быть штрафы (trade-off)
-- Варианты должны быть РАЗНООБРАЗНЫМИ и логичными для биома/черты/истории
-- НЕ повторяй варианты из прошлых ходов`;
-
-    if (hasNeighbor) {
-        prompt += `
-
-ПРАВИЛА ДЛЯ ДИПЛОМАТИИ:
-У каждого дипломатического варианта есть:
-- "effects" — эффекты НА СЕБЯ
-- "neighbor_effects" — эффекты, применяемые К СОСЕДУ
-
-Примеры дипломатических действий:
-- Торговля: себе materials:+3, соседу materials:-2
-- Кража/набег: себе food:+5, соседу food:-4, safety:-5
-- Дары: соседу happiness:+10, себе cohesion:+3
-- Угрозы: себе safety:+5, соседу safety:-8
-- Обмен знаниями: себе knowledge:+2, соседу knowledge:+2`;
-    }
-
-    prompt += `
-
-ПРАВИЛА ДЛЯ ЧЕРТЕЖЕЙ ЗДАНИЙ (unlocked_buildings):
-- Если текущие выборы логически открывают новую постройку — добавь её в unlocked_buildings
-- Цена в 🪨 материалах должна быть адекватной: примерно ${Math.max(3, Math.round(avgMaterials * 0.3))}-${Math.max(10, Math.round(avgMaterials * 0.7))} 🪨
-- passive_effects — бонусы, которые здание даёт КАЖДЫЙ ход (mult_food:+0.2, food:+1, happiness:+3 и т.п.)
-- НЕ дублируй уже известные чертежи: ${builtNames.concat(blueprintNames).join(', ') || 'нет'}
-- Здания должны быть логичны для каменного века: хижины, костровища, загоны, святилища, мастерские, стены и т.п.
-
-ОТВЕТЬ СТРОГО в формате JSON (БЕЗ markdown, БЕЗ \`\`\`json, только чистый JSON):
-{
-  "narrative": "Атмосферный текст 2-3 предложения о жизни племени в эту эпоху",
-  "summary": "Обновлённое описание состояния племени, 4-5 предложений с учётом всей истории",
-  "science": [
-    {"title": "Название", "description": "Описание 1-2 предложения", "effects": {"knowledge": 3, "mult_knowledge": 0.2}},
-    ...ещё ${slots - 1} вариантов
-  ],
-  "social": [
-    {"title": "Название", "description": "Описание 1-2 предложения", "effects": {"happiness": 8, "cohesion": 5}},
-    ...ещё ${slots - 1} вариантов
-  ]${hasNeighbor ? `,
-  "diplomacy": [
-    {"title": "Название", "description": "Описание", "effects": {"safety": 5}, "neighbor_effects": {"materials": -3}},
-    ...ещё ${slots - 1} вариантов
-  ]` : ''},
-  "unlocked_buildings": [
-    {"name": "Название здания", "description": "Описание", "cost": 5, "passive_effects": {"mult_food": 0.2}}
-  ]
-}
-
-Поле unlocked_buildings может быть пустым массивом [], если ничего не открывается.`;
-
-    // === ОТПРАВКА ЗАПРОСА К OPENROUTER ===
-    try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': window.location.href,
-                'X-Title': 'Tribes Game'
-            },
-            body: JSON.stringify({
-                model: 'openrouter/hunter-alpha',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'Ты генератор контента для игры. Отвечай ТОЛЬКО валидным JSON на русском языке. Никакого текста до или после JSON. Никакого markdown. Никаких ```json блоков.'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                max_tokens: 3000,
-                temperature: 0.85,
-                top_p: 0.9
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error?.message || `HTTP ошибка: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.error) {
-            throw new Error(data.error.message || JSON.stringify(data.error));
-        }
-
-        // Извлекаем контент
-        let content = data.choices[0].message.content;
-
-        // Пытаемся найти JSON в ответе
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error('LLM не вернул JSON. Попробуй перегенерировать.');
-        }
-
-        const parsed = JSON.parse(jsonMatch[0]);
-
-        // Валидация обязательных полей
-        if (!parsed.science || !parsed.social || !parsed.narrative || !parsed.summary) {
-            throw new Error('Неполный ответ от LLM. Попробуй перегенерировать.');
-        }
-
-        // Добавляем новые чертежи к существующим
-        const existingBlueprints = me.blueprints || [];
-        const existingNames = existingBlueprints.map(b => b.name).concat(builtNames);
-        const newBlueprints = (parsed.unlocked_buildings || []).filter(b => !existingNames.includes(b.name));
-        const allBlueprints = [...existingBlueprints, ...newBlueprints];
-
-        // Сохраняем в базу
-        await db.ref('game/players/' + currentUser).update({
-            llmResponse: parsed,
-            llmLoading: false,
-            llmError: null,
-            blueprints: allBlueprints
-        });
-
-    } catch (error) {
-        console.error('Ошибка LLM:', error);
-        await db.ref('game/players/' + currentUser).update({
-            llmLoading: false,
-            llmError: error.message
-        });
-    }
-
-    llmRequestInProgress = false;
-}
     // ============================================
     // ПЕРЕГЕНЕРАЦИЯ LLM
     // ============================================
@@ -3239,58 +2681,62 @@ function getApiKey() {
 // ============================================
 // РАСЧЁТ ВСЕХ МОДИФИКАТОРОВ ИГРОКА
 // ============================================
+
+// ============================================
+// ПОЛУЧЕНИЕ ВСЕХ МОДИФИКАТОРОВ ИГРОКА (объединённая версия)
+// ============================================
 function getPlayerModifiers(me) {
-  // Базовые значения
+  // Базовые значения для всех возможных эффектов
   const mods = {
     // Множители добычи
-    mult_food: me.mult_food || 1,
-    mult_materials: me.mult_materials || 1,
-    mult_knowledge: me.mult_knowledge || 1,
-    mult_spirit: me.mult_spirit || 1,
-    
+    mult_food: 1.0,
+    mult_materials: 1.0,
+    mult_knowledge: 1.0,
+    mult_spirit: 1.0,
+
     // Потребление
     food_consumption_mult: 1.0,
     food_consumption_flat: 0,
-    
+
     // Население
-    pop_growth_chance: 0.25, // Базовый 25%
+    pop_growth_chance: 0.25,
     pop_growth_threshold_food: 8,
     pop_growth_threshold_health: 60,
     pop_growth_threshold_happiness: 50,
-    max_population: 20, // Лимит по умолчанию
-    
+    max_population: 20,
+
     // Боевые
     defense_mult: 1.0,
     attack_mult: 1.0,
     diplomacy_defense: 0,
     diplomacy_power: 0,
-    
+
     // Торговля
     trade_bonus: 0,
     trade_efficiency: 1.0,
-    
+
     // Строительство
     build_cost_mult: 1.0,
     build_discount: 0,
-    
-    // Бонусы выбора
+
+    // Развитие
     choice_slots_bonus: 0,
     blueprint_chance: 0,
-    
+
     // Выживание
     starvation_resistance: 0,
     disease_resistance: 0,
-    
+
     // Регенерация
     health_regen: 0,
     happiness_regen: 0,
     safety_regen: 0,
-    
-    // Деградация (базовые значения — сколько теряем за ход)
+
+    // Деградация
     happiness_decay: 1,
     safety_decay: 1,
-    
-    // Прямые бонусы от зданий
+
+    // Прямые бонусы от зданий за ход
     food_per_turn: 0,
     materials_per_turn: 0,
     knowledge_per_turn: 0,
@@ -3300,24 +2746,22 @@ function getPlayerModifiers(me) {
     safety_per_turn: 0,
     cohesion_per_turn: 0
   };
-  
-  // Применяем эффекты от зданий
+
+  // Применяем эффекты от построенных зданий
   const buildings = me.buildings || [];
   buildings.forEach(building => {
     if (!building.passive_effects) return;
-    
     Object.entries(building.passive_effects).forEach(([key, value]) => {
       const numValue = parseFloat(value) || 0;
-      
-      // Множители складываем к базе
+      // Множители (mult_) — складываются к базе
       if (key.startsWith('mult_')) {
         mods[key] = (mods[key] || 1) + numValue;
       }
-      // Проценты и шансы складываем
+      // Проценты, шансы, эффективность — суммируются
       else if (key.includes('_chance') || key.includes('_mult') || key.includes('_efficiency')) {
         mods[key] = (mods[key] || 0) + numValue;
       }
-      // Пороги заменяем (берём минимальный)
+      // Пороги — берём минимальный (чем ниже порог, тем легче достичь)
       else if (key.includes('threshold_')) {
         mods[key] = Math.min(mods[key] || 100, numValue);
       }
@@ -3325,14 +2769,308 @@ function getPlayerModifiers(me) {
       else if (key === 'max_population') {
         mods[key] = Math.max(mods[key] || 0, numValue);
       }
-      // Остальное складываем
+      // Остальные эффекты (health_regen, food_per_turn и т.п.) суммируются
       else {
         mods[key] = (mods[key] || 0) + numValue;
       }
     });
   });
-  
+
   return mods;
+}
+
+// ============================================
+// ЗАПРОС К LLM (объединённая версия с deepseek)
+// ============================================
+async function requestLLM() {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    await db.ref('game/players/' + currentUser + '/llmError').set('Нужен API ключ OpenRouter! Вставь его вверху страницы.');
+    return;
+  }
+  if (llmRequestInProgress) return;
+  llmRequestInProgress = true;
+
+  const me = gameData.players[currentUser];
+  if (!me || !me.tribe) {
+    llmRequestInProgress = false;
+    return;
+  }
+
+  await db.ref('game/players/' + currentUser).update({
+    llmLoading: true,
+    llmError: null
+  });
+
+  const turn = gameData.turn || 1;
+  const playerNames = Object.keys(gameData.players);
+  const tribe = me.tribe;
+  const slots = getChoiceSlots(me);
+  const foodConsumption = getFoodConsumption(me);
+  const buildingBonuses = getBuildingBonuses(me);
+  const mods = getPlayerModifiers(me);
+
+  // Списки построек и чертежей
+  const builtNames = (me.buildings || []).map(b => b.name);
+  const blueprintNames = (me.blueprints || []).map(b => b.name);
+
+  // Средние материалы всех игроков для подсказки цены
+  let avgMaterials = 0;
+  playerNames.forEach(name => {
+    avgMaterials += (gameData.players[name].materials || 0);
+  });
+  avgMaterials = Math.round(avgMaterials / playerNames.length);
+
+  // ========== ФОРМИРУЕМ ПРОМПТ ==========
+  let prompt = `Ты — генератор контента для пошаговой стратегии каменного века, подобной Civilization.
+
+СТАРТОВЫЕ ХАРАКТЕРИСТИКИ ПЛЕМЕНИ:
+- Биом: ${tribe.biome} (${tribe.biomeDesc})
+- География: ${tribe.geography} (${tribe.geographyDesc})
+- Черта племени: ${tribe.trait} (${tribe.traitDesc})
+- Поблизости: ${tribe.nearby} (${tribe.nearbyDesc})
+
+ТЕКУЩИЕ РЕСУРСЫ:
+- 🍖 Еда: ${me.food || 0} (множитель ×${((me.mult_food || 1) + buildingBonuses.mult_food).toFixed(2)}, потребление: ${foodConsumption}/ход)
+- 🪨 Материалы: ${me.materials || 0} (×${((me.mult_materials || 1) + buildingBonuses.mult_materials).toFixed(2)})
+- 🔬 Знания: ${me.knowledge || 0} (×${((me.mult_knowledge || 1) + buildingBonuses.mult_knowledge).toFixed(2)})
+- 🌙 Духовность: ${me.spirit || 0} (×${((me.mult_spirit || 1) + buildingBonuses.mult_spirit).toFixed(2)})
+
+ПАРАМЕТРЫ ПЛЕМЕНИ:
+- ❤️ Здоровье: ${me.health || 0}/100
+- 😊 Счастье: ${me.happiness || 0}/100
+- 🛡️ Безопасность: ${me.safety || 0}/100
+- 🤝 Сплочённость: ${me.cohesion || 0}/100
+
+АКТИВНЫЕ МОДИФИКАТОРЫ:
+- Шанс роста населения: ${Math.round((mods.pop_growth_chance || 0.25) * 100)}%
+- Множитель потребления еды: ×${(mods.food_consumption_mult || 1).toFixed(2)}
+- Защита от дипломатии: ${Math.round((mods.diplomacy_defense || 0) * 100)}%
+- Сила дипломатии: +${Math.round((mods.diplomacy_power || 0) * 100)}%
+- Стоимость строительства: ×${(mods.build_cost_mult || 1).toFixed(2)}
+- Доп. слоты выбора: +${mods.choice_slots_bonus || 0}
+
+👥 Население: ${me.population || 5} (макс: ${mods.max_population || 20})
+📅 Текущий ход: ${turn} (каждый ход ≈ одно поколение)
+🏗️ Построено: ${builtNames.length > 0 ? builtNames.join(', ') : 'ничего'}
+📐 Известные чертежи: ${blueprintNames.length > 0 ? blueprintNames.join(', ') : 'нет'}
+
+💰 Средние 🪨 материалы у всех игроков: ${avgMaterials}
+
+ТЕКУЩЕЕ СОСТОЯНИЕ ПЛЕМЕНИ:
+${me.summary || 'Племя только начинает свой путь в каменном веке.'}`;
+
+  const pendingDiplo = me.pendingDiplo || [];
+  if (pendingDiplo.length > 0) {
+    prompt += `\n\nДЕЙСТВИЯ СОСЕДЕЙ В ПРОШЛОМ ХОДУ:`;
+    pendingDiplo.forEach(diplo => {
+      prompt += `\n- Племя "${diplo.from}" совершило действие: "${diplo.action}"`;
+    });
+  }
+
+  if (me.history && me.history.length > 0) {
+    const recentHistory = me.history.slice(-5);
+    prompt += `\n\nПОСЛЕДНИЕ РЕШЕНИЯ ПЛЕМЕНИ:`;
+    recentHistory.forEach(entry => {
+      prompt += `\nХод ${entry.turn}: Изыскание: "${entry.science}", Уклад: "${entry.social}"`;
+      if (entry.diplomacy) prompt += `, Дипломатия: "${entry.diplomacy}"`;
+      if (entry.built) prompt += `, Построено: "${entry.built}"`;
+    });
+  }
+
+  let hasNeighbor = false;
+  if (turn >= 5) {
+    const neighborName = getNeighbor(currentUser, playerNames);
+    if (neighborName && gameData.players[neighborName]) {
+      hasNeighbor = true;
+      const neighbor = gameData.players[neighborName];
+      const neighborMods = getPlayerModifiers(neighbor);
+      prompt += `\n\nСОСЕДНЕЕ ПЛЕМЯ "${neighborName}":
+${neighbor.summary || 'О нём мало что известно.'}
+Ресурсы соседа: 🍖${neighbor.food || 0} 🪨${neighbor.materials || 0} 🔬${neighbor.knowledge || 0} 🌙${neighbor.spirit || 0} 👥${neighbor.population || 5}
+Постройки соседа: ${(neighbor.buildings || []).map(b => b.name).join(', ') || 'нет'}
+Защита соседа: ${Math.round((neighborMods.diplomacy_defense || 0) * 100)}%, множитель защиты: ×${(neighborMods.defense_mult || 1).toFixed(2)}`;
+    }
+  }
+
+  prompt += `\n\nТВОЯ ЗАДАЧА — сгенерировать ровно ${slots} вариантов в каждой категории.
+
+=== БАЗОВЫЕ ЭФФЕКТЫ ===
+- Ресурсы (food, materials, knowledge, spirit): +2..+8 / -1..-5
+- Множители (mult_food, mult_materials, mult_knowledge, mult_spirit): +0.15..+0.5 / -0.1..-0.25
+- Параметры (health, happiness, safety, cohesion): +5..+15 / -3..-10
+- Население (population): 0, иногда +1, редко -1
+
+=== РАСШИРЕННЫЕ ЭФФЕКТЫ (используй разнообразно!) ===
+
+МОДИФИКАТОРЫ ПОТРЕБЛЕНИЯ:
+- food_consumption_mult: множитель потребления еды (0.8 = племя ест на 20% меньше)
+- food_consumption_flat: фиксированное изменение (+1 = нужно на 1 еду больше)
+
+МОДИФИКАТОРЫ НАСЕЛЕНИЯ:
+- pop_growth_chance: изменение шанса рождаемости (+0.1 = +10% шанс)
+- pop_growth_threshold_food: порог еды для роста (меньше = легче расти)
+- pop_growth_threshold_health: порог здоровья для роста
+- pop_growth_threshold_happiness: порог счастья для роста
+- max_population: максимум населения (+5 = можно иметь на 5 больше)
+
+БОЕВЫЕ И ДИПЛОМАТИЧЕСКИЕ:
+- defense_mult: множитель защиты (1.3 = получаешь на 30% меньше урона)
+- attack_mult: множитель атаки (1.2 = наносишь на 20% больше)
+- diplomacy_defense: защита от дипло-эффектов (0.2 = блокирует 20%)
+- diplomacy_power: усиление своих дипло-эффектов (0.3 = +30% эффект)
+
+ТОРГОВЛЯ:
+- trade_bonus: бонус к получаемому при торговле (+2 ресурса)
+- trade_efficiency: множитель торговли (1.5 = получаешь в 1.5 раза больше)
+
+СТРОИТЕЛЬСТВО:
+- build_cost_mult: множитель стоимости (0.7 = на 30% дешевле)
+- build_discount: скидка (3 = все здания на 3🪨 дешевле)
+
+ВЫЖИВАНИЕ И РЕГЕНЕРАЦИЯ:
+- starvation_resistance: снижение урона от голода (5 = -5 урона)
+- health_regen: регенерация здоровья за ход (+3)
+- happiness_regen: регенерация счастья (+2)
+- safety_regen: регенерация безопасности (+2)
+- happiness_decay: изменение падения счастья (-0.5 = падает на 0.5 медленнее)
+- safety_decay: изменение падения безопасности (0 = не падает)
+
+РАЗВИТИЕ:
+- choice_slots_bonus: доп. варианты выбора (+1)
+- blueprint_chance: шанс доп. чертежа (+0.2 = +20%)
+
+=== ПРИМЕРЫ ИНТЕРЕСНЫХ КОМБИНАЦИЙ ===
+1. Изыскание "Культ плодородия": spirit:+2, pop_growth_chance:+0.15, food_consumption_mult:1.1 (больше детей, но больше едят)
+2. Уклад "Воинские традиции": cohesion:+5, attack_mult:+0.3, diplomacy_power:+0.2, happiness_decay:+0.5 (сильнее, но менее счастливы)
+3. Изыскание "Целебные травы": knowledge:+2, health_regen:+5, starvation_resistance:+3
+4. Уклад "Торговый народ": materials:-2, trade_efficiency:+0.4, trade_bonus:+3, diplomacy_defense:+0.15
+5. Постройка "Сторожевые башни": cost:6, passive_effects:{safety_regen:+3, defense_mult:+0.2, safety_decay:-1}
+
+=== ВАЖНО ===
+- У сильных бонусов ДОЛЖНЫ быть trade-off (штрафы или альтернативные затраты)
+- Создавай УНИКАЛЬНЫЕ эффекты, связанные с контекстом (биом, история, соседи)
+- НЕ все эффекты должны быть про еду и материалы — добавляй модификаторы!
+- Здания должны давать passive_effects с расширенными модификаторами`;
+
+  if (hasNeighbor) {
+    prompt += `
+
+=== ПРАВИЛА ДИПЛОМАТИИ ===
+У каждого дипломатического варианта:
+- "effects" — эффекты НА СЕБЯ
+- "neighbor_effects" — эффекты НА СОСЕДА (учитывают защиту соседа!)
+
+Примеры с расширенными эффектами:
+- Набег: effects:{food:+5, safety:-5}, neighbor_effects:{food:-6, happiness:-10, safety:-8}
+- Торговля: effects:{materials:+4, trade_efficiency:+0.1}, neighbor_effects:{materials:-2, trade_bonus:+1}
+- Угрозы: effects:{diplomacy_power:+0.1}, neighbor_effects:{safety:-12, happiness:-5}
+- Альянс: effects:{defense_mult:+0.15, diplomacy_defense:+0.1}, neighbor_effects:{defense_mult:+0.1}
+- Культурный обмен: effects:{spirit:+3, choice_slots_bonus:+0.5}, neighbor_effects:{spirit:+2, happiness:+5}`;
+  }
+
+  prompt += `
+
+=== ЧЕРТЕЖИ ЗДАНИЙ ===
+- Цена: ${Math.max(3, Math.round(avgMaterials * 0.3))}-${Math.max(10, Math.round(avgMaterials * 0.7))} 🪨
+- passive_effects должны содержать РАСШИРЕННЫЕ модификаторы
+- НЕ дублируй уже известные чертежи: ${builtNames.concat(blueprintNames).join(', ') || 'нет'}
+
+Примеры зданий с расширенными эффектами:
+- "Храм предков": cost:8, passive_effects:{spirit:+1, pop_growth_chance:+0.05, cohesion:+3}
+- "Оборонительный ров": cost:10, passive_effects:{defense_mult:+0.3, diplomacy_defense:+0.15}
+- "Торговая площадь": cost:7, passive_effects:{trade_efficiency:+0.25, happiness:+2}
+- "Охотничий лагерь": cost:5, passive_effects:{mult_food:+0.2, food_consumption_mult:0.9}
+
+=== ФОРМАТ ОТВЕТА ===
+Ответь СТРОГО в JSON (без markdown, без \`\`\`):
+{
+  "narrative": "Атмосферный текст 2-3 предложения",
+  "summary": "Обновлённое описание 4-5 предложений",
+  "science": [
+    {"title": "Название", "description": "Описание", "effects": {"knowledge": 3, "health_regen": 2, "starvation_resistance": 3}},
+    ...ещё ${slots - 1}
+  ],
+  "social": [
+    {"title": "Название", "description": "Описание", "effects": {"happiness": 8, "pop_growth_chance": 0.1, "food_consumption_mult": 1.05}},
+    ...ещё ${slots - 1}
+  ]${hasNeighbor ? `,
+  "diplomacy": [
+    {"title": "Название", "description": "Описание", "effects": {"safety": 5, "diplomacy_power": 0.1}, "neighbor_effects": {"materials": -4, "safety": -8}},
+    ...ещё ${slots - 1}
+  ]` : ''},
+  "unlocked_buildings": [
+    {"name": "Название", "description": "Описание", "cost": 6, "passive_effects": {"mult_food": 0.15, "health_regen": 2}}
+  ]
+}
+
+unlocked_buildings может быть пустым [] если ничего не открывается.`;
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'Tribes Game'
+      },
+      body: JSON.stringify({
+        model: 'openrouter/hunter-alpha', // можно заменить на другую при необходимости
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты генератор контента для игры. Отвечай ТОЛЬКО валидным JSON на русском. Никакого markdown. Используй РАЗНООБРАЗНЫЕ расширенные эффекты, не только базовые ресурсы!'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 3500,
+        temperature: 0.85,
+        top_p: 0.9
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `HTTP ошибка: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+    let content = data.choices[0].message.content;
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('LLM не вернул JSON. Попробуй перегенерировать.');
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed.science || !parsed.social || !parsed.narrative || !parsed.summary) {
+      throw new Error('Неполный ответ от LLM. Попробуй перегенерировать.');
+    }
+
+    const existingBlueprints = me.blueprints || [];
+    const existingNames = existingBlueprints.map(b => b.name).concat(builtNames);
+    const newBlueprints = (parsed.unlocked_buildings || []).filter(b => !existingNames.includes(b.name));
+    const allBlueprints = [...existingBlueprints, ...newBlueprints];
+
+    await db.ref('game/players/' + currentUser).update({
+      llmResponse: parsed,
+      llmLoading: false,
+      llmError: null,
+      blueprints: allBlueprints
+    });
+
+  } catch (error) {
+    console.error('Ошибка LLM:', error);
+    await db.ref('game/players/' + currentUser).update({
+      llmLoading: false,
+      llmError: error.message
+    });
+  }
+
+  llmRequestInProgress = false;
 }
 
 
