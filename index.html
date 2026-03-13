@@ -1441,71 +1441,74 @@
 // ============================================
 // РАСШИРЕННЫЕ ЭФФЕКТЫ
 // ============================================
+// ============================================
+// РАСШИРЕННЫЕ ЭФФЕКТЫ - ТЕКСТОВЫЕ ПОДПИСИ
+// ============================================
 const EFFECT_LABELS = {
-    // Ресурсы (мгновенные)
-    food: '🍖',
-    materials: '🪨',
-    knowledge: '🔬',
-    spirit: '🌙',
-    
-    // Множители добычи
-    mult_food: '🍖×',
-    mult_materials: '🪨×',
-    mult_knowledge: '🔬×',
-    mult_spirit: '🌙×',
-    
-    // Параметры
-    health: '❤️',
-    happiness: '😊',
-    safety: '🛡️',
-    cohesion: '🤝',
-    population: '👥',
-    
-    // === НОВЫЕ: Потребление ===
-    food_consumption_mult: '🍖📉',      // Множитель потребления еды (0.8 = -20%)
-    food_consumption_flat: '🍖−',       // Фиксированное изменение потребления
-    
-    // === НОВЫЕ: Население ===
-    pop_growth_chance: '👶%',           // Модификатор шанса роста (+0.1 = +10%)
-    pop_growth_threshold_food: '👶🍖',  // Порог еды для роста (по умолч. 8)
-    pop_growth_threshold_health: '👶❤️', // Порог здоровья для роста
-    pop_growth_threshold_happiness: '👶😊', // Порог счастья для роста
-    max_population: '👥🔝',             // Лимит населения
-    
-    // === НОВЫЕ: Защита и урон ===
-    defense_mult: '🛡️×',               // Множитель защиты от атак
-    attack_mult: '⚔️×',                // Множитель урона при атаках
-    diplomacy_defense: '🤝🛡️',         // Снижение входящего дипло-урона
-    diplomacy_power: '🤝⚔️',           // Усиление исходящих дипло-эффектов
-    
-    // === НОВЫЕ: Торговля ===
-    trade_bonus: '🔄+',                 // Бонус к получаемому при торговле
-    trade_efficiency: '🔄×',            // Множитель эффективности торговли
-    
-    // === НОВЫЕ: Строительство ===
-    build_cost_mult: '🏗️×',            // Множитель стоимости строительства
-    build_discount: '🏗️−',             // Скидка на строительство (плоская)
-    
-    // === НОВЫЕ: Знания и духовность ===
-    choice_slots_bonus: '🎯+',          // Доп. слоты выбора
-    blueprint_chance: '📐%',            // Шанс получить доп. чертёж
-    
-    // === НОВЫЕ: Выживание ===
-    starvation_resistance: '💀🛡️',     // Снижение урона от голода
-    disease_resistance: '🦠🛡️',        // Сопротивление болезням (будущее)
-    
-    // === НОВЫЕ: Регенерация ===
-    health_regen: '❤️+',               // Восстановление здоровья за ход
-    happiness_regen: '😊+',            // Восстановление счастья за ход
-    safety_regen: '🛡️+',              // Восстановление безопасности за ход
-    
-    // === НОВЫЕ: Деградация ===
-    happiness_decay: '😊−',            // Изменение скорости падения счастья
-    safety_decay: '🛡️−',              // Изменение скорости падения безопасности
-    
-    // === НОВЫЕ: Сезонные/условные ===
-    winter_food_mult: '❄️🍖',          // Множитель еды зимой (будущее)
-    rain_materials_mult: '🌧️🪨',       // Множитель материалов в дождь (будущее)
+  // Ресурсы (мгновенные)
+  food: '🍖 Еда',
+  materials: '🪨 Материалы',
+  knowledge: '🔬 Знания',
+  spirit: '🌙 Духовность',
+  
+  // Множители добычи
+  mult_food: '🍖 множитель еды',
+  mult_materials: '🪨 множитель материалов',
+  mult_knowledge: '🔬 множитель знаний',
+  mult_spirit: '🌙 множитель духовности',
+  
+  // Параметры
+  health: '❤️ Здоровье',
+  happiness: '😊 Счастье',
+  safety: '🛡️ Безопасность',
+  cohesion: '🤝 Сплочённость',
+  population: '👥 Население',
+  
+  // Потребление
+  food_consumption_mult: '🍖 множитель потребления еды',
+  food_consumption_flat: '🍖 фикс. изменение потребления',
+  
+  // Население
+  pop_growth_chance: '👶 шанс роста населения',
+  pop_growth_threshold_food: '👶 порог еды для роста',
+  pop_growth_threshold_health: '👶 порог здоровья для роста',
+  pop_growth_threshold_happiness: '👶 порог счастья для роста',
+  max_population: '👥 максимум населения',
+  
+  // Защита и урон
+  defense_mult: '🛡️ множитель защиты',
+  attack_mult: '⚔️ множитель атаки',
+  diplomacy_defense: '🤝 защита от дипломатии',
+  diplomacy_power: '🤝 сила дипломатии',
+  
+  // Торговля
+  trade_bonus: '🔄 бонус торговли',
+  trade_efficiency: '🔄 эффективность торговли',
+  
+  // Строительство
+  build_cost_mult: '🏗️ множитель стоимости',
+  build_discount: '🏗️ скидка на строительство',
+  
+  // Знания и духовность
+  choice_slots_bonus: '🎯 доп. варианты выбора',
+  blueprint_chance: '📐 шанс получить чертёж',
+  
+  // Выживание
+  starvation_resistance: '💀 сопротивление голоду',
+  disease_resistance: '🦠 сопротивление болезням',
+  
+  // Регенерация
+  health_regen: '❤️ регенерация здоровья',
+  happiness_regen: '😊 регенерация счастья',
+  safety_regen: '🛡️ регенерация безопасности',
+  
+  // Деградация
+  happiness_decay: '😊 падение счастья за ход',
+  safety_decay: '🛡️ падение безопасности за ход',
+  
+  // Сезонные/условные
+  winter_food_mult: '❄️ множитель еды зимой',
+  rain_materials_mult: '🌧️ множитель материалов в дождь',
 };
 
     // ============================================
@@ -2036,7 +2039,7 @@ function getBuildingBonuses(me) {
                     <div class="res-val">${value}</div>
                     <div class="res-label">${res.label}</div>
                     <div class="res-mult">×${totalMultiplier.toFixed(2)}${buildingBonusStr}</div>
-                    <div class="res-change ${changeClass}">${changeStr}/ход</div>
+                    <div class="res-change ${changeClass}">${changeStr}</div>
                 </div>
             `;
         });
@@ -2130,7 +2133,7 @@ function getBuildingBonuses(me) {
                 <div class="settler-row">
                     <div>
                         <div class="settler-label">${res.icon} ${res.label}</div>
-                        <div class="settler-yield">= ${yield_}/ход (×${totalMultiplier.toFixed(2)})${extra}</div>
+                        <div class="settler-yield">= ${yield_} (×${totalMultiplier.toFixed(2)})${extra}</div>
                     </div>
                     <div class="settler-controls">
                         <button onclick="changeSettler('${res.key}', -1)" ${count <= 0 ? 'disabled' : ''}>−</button>
@@ -2219,7 +2222,7 @@ function getBuildingBonuses(me) {
                                 const num = parseFloat(v);
                                 if (!num) return '';
                                 const cls = num > 0 ? 'positive' : 'negative';
-                                return `<span class="effect-tag ${cls}">${getEffectLabel(k)}${num > 0 ? '+' : ''}${v}/ход</span>`;
+                                return `<span class="effect-tag ${cls}">${getEffectLabel(k)}${num > 0 ? '+' : ''}${v}</span>`;
                             }).join('') + '</div>';
                     }
 
@@ -2472,6 +2475,9 @@ function getBuildingBonuses(me) {
     // ============================================
  // ============================================
 // ПОЛУЧЕНИЕ МЕТКИ ЭФФЕКТА
+// ============================================
+// ============================================
+// ПОЛУЧЕНИЕ ПОДПИСИ ЭФФЕКТА
 // ============================================
 function getEffectLabel(key) {
   return EFFECT_LABELS[key] || key;
